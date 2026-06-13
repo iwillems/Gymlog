@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Gymlog</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gymlog">
+<meta name="theme-color" content="#000000">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  background: #000; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  height: 100%;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  display: flex;
+  flex-direction: column;
+}
+header {
+  text-align: center;
+  padding: 14px 0 6px;
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  color: #6e6e73;
+}
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px 0 8px;
+}
+svg.floorplan {
+  width: 100%;
+  height: 100%;
+  max-width: 393px;
+  display: block;
+}
+.device { cursor: pointer; }
+.device .device-bg { transition: fill 120ms; }
+.device:active .device-bg { fill: #2a2a2c; }
+
+/* Sheets */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+.backdrop.open { opacity: 1; pointer-events: auto; }
+#picker-backdrop { z-index: 100; }
+#picker-sheet    { z-index: 101; }
+#history-backdrop{ z-index: 102; }
+#history-sheet   { z-index: 103; }
+
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #1c1c1e;
+  border-radius: 18px 18px 0 0;
+  transform: translateY(100%);
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+}
+.sheet.open { transform: translateY(0); }
+
+.sheet-handle-area {
+  padding: 8px 0 4px;
+  touch-action: none;
+}
+.sheet-handle {
+  width: 38px; height: 5px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 3px;
+  margin: 0 auto;
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+  min-height: 36px;
+}
+.sheet-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+.icon-btn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  width: 36px; height: 36px;
+  border-radius: 18px;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.icon-btn:active { background: rgba(255,255,255,0.18); }
+.icon-btn svg {
+  width: 18px; height: 18px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* Picker wheels */
+.wheels-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 24px;
+}
+.wheel-wrap {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+.wheel-label {
+  font-size: 11px;
+  color: #8e8e93;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.wheel-container {
+  position: relative;
+  height: 200px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.wheel-container::before,
+.wheel-container::after {
+  content: '';
+  position: absolute;
+  left: 16px; right: 16px;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  pointer-events: none;
+  z-index: 2;
+}
+.wheel-container::before { top: 80px; }
+.wheel-container::after  { top: 120px; }
+
+.wheel {
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 18%, #000 38%, #000 62%, rgba(0,0,0,0.4) 82%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 18%, #000 38%, #000 62%, rgba(0,0,0,0.4) 82%, transparent 100%);
+}
+.wheel::-webkit-scrollbar { display: none; }
+.wheel-list { padding: 80px 0; }
+.wheel-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+/* History */
+.history-list {
+  overflow-y: auto;
+  padding: 4px 16px 16px;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+}
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 14px;
+}
+.history-row:last-child { border-bottom: none; }
+.history-row .ts { color: #8e8e93; font-variant-numeric: tabular-nums; }
+.history-row .val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.history-empty {
+  text-align: center;
+  color: #8e8e93;
+  padding: 40px 16px;
+  font-size: 14px;
+}
+.btn-row {
+  padding: 12px 16px 4px;
+}
+.btn-primary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-primary:active { background: rgba(255,255,255,0.18); }
+</style>
+</head>
+<body>
+
+<header>GYMLOG</header>
+
+<div class="stage">
+  <svg class="floorplan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 600" preserveAspectRatio="xMidYMid meet">
+    <!-- linker ruimte -->
+    <rect x="10" y="20" width="160" height="520" rx="6" ry="6"
+          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
+    <!-- rechter ruimte -->
+    <rect x="170" y="20" width="213" height="520" rx="6" ry="6"
+          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
+
+    <!-- LINKERRUIMTE -->
+    <g class="device" data-id="1">
+      <rect class="device-bg" x="19" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="41" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="41" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">1</text>
+    </g>
+    <g class="device" data-id="2">
+      <rect class="device-bg" x="68" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="90" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="90" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">2</text>
+    </g>
+    <g class="device" data-id="3">
+      <rect class="device-bg" x="117" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="139" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="139" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">3</text>
+    </g>
+    <g class="device" data-id="4">
+      <rect class="device-bg" x="19" y="122" width="58" height="58" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="48" y="148" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="48" y="167" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">4</text>
+    </g>
+    <g class="device" data-id="5">
+      <rect class="device-bg" x="19" y="186" width="58" height="58" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="48" y="212" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="48" y="231" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">5</text>
+    </g>
+
+    <!-- RECHTERRUIMTE -->
+    <g class="device" data-id="6">
+      <rect class="device-bg" x="200" y="40" width="80" height="72" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="240" y="74" text-anchor="middle" font-size="11" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="240" y="96" text-anchor="middle" font-size="18" font-weight="600" fill="#fff" pointer-events="none">6</text>
+    </g>
+    <g class="device" data-id="7">
+      <rect class="device-bg" x="185" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="214" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="214" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">7</text>
+    </g>
+    <g class="device" data-id="8">
+      <rect class="device-bg" x="253" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="282" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="282" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">8</text>
+    </g>
+    <g class="device" data-id="9">
+      <rect class="device-bg" x="321" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="350" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
+      <text x="350" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">9</text>
+    </g>
+
+    <text x="90" y="565" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE A</text>
+    <text x="276.5" y="565" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE B</text>
+  </svg>
+</div>
+
+<!-- ============ PICKER SHEET ============ -->
+<div class="backdrop" id="picker-backdrop"></div>
+<div class="sheet" id="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+  <div class="sheet-handle-area" id="picker-handle-area"><div class="sheet-handle"></div></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="picker-title">Apparaat</div>
+    <button class="icon-btn" id="open-history" aria-label="Geschiedenis">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+    </button>
+  </div>
+  <div class="wheels-row">
+    <div class="wheel-wrap">
+      <div class="wheel-label">Gewicht</div>
+      <div class="wheel-container"><div class="wheel" id="wheel1"></div></div>
+    </div>
+    <div class="wheel-wrap">
+      <div class="wheel-label">Plus</div>
+      <div class="wheel-container"><div class="wheel" id="wheel2"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HISTORY SHEET ============ -->
+<div class="backdrop" id="history-backdrop"></div>
+<div class="sheet" id="history-sheet" role="dialog" aria-modal="true" aria-labelledby="history-title">
+  <div class="sheet-handle-area" id="history-handle-area"><div class="sheet-handle"></div></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="history-title">Geschiedenis</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="history-list" id="history-list"></div>
+  <div class="btn-row">
+    <button class="btn-primary" id="history-close">Sluiten</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== Config =====
+  const WHEEL1_VALUES = Array.from({length: 20}, (_, i) => (i + 1) * 10); // 10..200
+  const WHEEL2_VALUES = [0, 5, 10, 15];
+  const ITEM_HEIGHT = 40;
+  const HISTORY_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 3 maanden
+
+  // ===== Storage =====
+  const STORE = {
+    getCurrent(id) {
+      try {
+        const v = JSON.parse(localStorage.getItem('current_' + id));
+        if (v && typeof v.wheel1 === 'number' && typeof v.wheel2 === 'number') return v;
+      } catch (e) {}
+      return { wheel1: 10, wheel2: 0 };
+    },
+    setCurrent(id, val) {
+      localStorage.setItem('current_' + id, JSON.stringify(val));
+    },
+    getHistory(id) {
+      try {
+        const v = JSON.parse(localStorage.getItem('history_' + id));
+        if (Array.isArray(v)) return v;
+      } catch (e) {}
+      return [];
+    },
+    addHistory(id, entry) {
+      const h = this.getHistory(id);
+      h.push(entry);
+      localStorage.setItem('history_' + id, JSON.stringify(h));
+    }
+  };
+
+  // ===== Wheel impl =====
+  function buildWheel(el, values, current) {
+    el.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'wheel-list';
+    values.forEach(v => {
+      const item = document.createElement('div');
+      item.className = 'wheel-item';
+      item.textContent = v;
+      list.appendChild(item);
+    });
+    el.appendChild(list);
+    el._values = values;
+    const idx = Math.max(0, values.indexOf(current));
+    // Set immediately and again after a tick to defeat scroll-snap settling
+    el.scrollTop = idx * ITEM_HEIGHT;
+    requestAnimationFrame(() => { el.scrollTop = idx * ITEM_HEIGHT; });
+  }
+  function getWheelValue(el) {
+    if (!el._values) return null;
+    const idx = Math.round(el.scrollTop / ITEM_HEIGHT);
+    const safe = Math.max(0, Math.min(el._values.length - 1, idx));
+    return el._values[safe];
+  }
+
+  // ===== Refs =====
+  const pickerBackdrop = document.getElementById('picker-backdrop');
+  const pickerSheet    = document.getElementById('picker-sheet');
+  const pickerTitle    = document.getElementById('picker-title');
+  const wheel1         = document.getElementById('wheel1');
+  const wheel2         = document.getElementById('wheel2');
+  const historyBackdrop= document.getElementById('history-backdrop');
+  const historySheet   = document.getElementById('history-sheet');
+  const historyTitle   = document.getElementById('history-title');
+  const historyList    = document.getElementById('history-list');
+
+  let activeDeviceId = null;
+  let openedSnapshot = null;
+
+  // ===== Picker =====
+  function openPicker(id) {
+    activeDeviceId = id;
+    const cur = STORE.getCurrent(id);
+    openedSnapshot = { wheel1: cur.wheel1, wheel2: cur.wheel2 };
+    pickerTitle.textContent = 'Apparaat ' + id;
+    buildWheel(wheel1, WHEEL1_VALUES, cur.wheel1);
+    buildWheel(wheel2, WHEEL2_VALUES, cur.wheel2);
+    pickerBackdrop.classList.add('open');
+    pickerSheet.classList.add('open');
+  }
+  function closePicker() {
+    if (activeDeviceId === null) return;
+    const w1 = getWheelValue(wheel1);
+    const w2 = getWheelValue(wheel2);
+    if (w1 !== null && w2 !== null) {
+      const next = { wheel1: w1, wheel2: w2 };
+      STORE.setCurrent(activeDeviceId, next);
+      if (!openedSnapshot || openedSnapshot.wheel1 !== w1 || openedSnapshot.wheel2 !== w2) {
+        STORE.addHistory(activeDeviceId, { ts: Date.now(), wheel1: w1, wheel2: w2 });
+      }
+    }
+    pickerSheet.classList.remove('open');
+    pickerBackdrop.classList.remove('open');
+    activeDeviceId = null;
+    openedSnapshot = null;
+  }
+
+  // ===== History =====
+  function fmtDate(ts) {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getDate()) + '-' + pad(d.getMonth()+1) + '-' + d.getFullYear()
+         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function openHistory() {
+    if (activeDeviceId === null) return;
+    const id = activeDeviceId;
+    historyTitle.textContent = 'Apparaat ' + id + ' — geschiedenis';
+    const cutoff = Date.now() - HISTORY_WINDOW_MS;
+    const filtered = STORE.getHistory(id)
+      .filter(h => h && typeof h.ts === 'number' && h.ts >= cutoff)
+      .sort((a, b) => b.ts - a.ts);
+    historyList.innerHTML = '';
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'history-empty';
+      empty.textContent = 'Nog geen wijzigingen in de laatste 3 maanden.';
+      historyList.appendChild(empty);
+    } else {
+      filtered.forEach(h => {
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        const ts = document.createElement('span');
+        ts.className = 'ts';
+        ts.textContent = fmtDate(h.ts);
+        const val = document.createElement('span');
+        val.className = 'val';
+        val.textContent = h.wheel1 + ' + ' + h.wheel2;
+        row.appendChild(ts);
+        row.appendChild(val);
+        historyList.appendChild(row);
+      });
+    }
+    historyBackdrop.classList.add('open');
+    historySheet.classList.add('open');
+  }
+  function closeHistory() {
+    historySheet.classList.remove('open');
+    historyBackdrop.classList.remove('open');
+  }
+
+  // ===== Wiring =====
+  document.querySelectorAll('.device').forEach(g => {
+    const id = parseInt(g.dataset.id, 10);
+    g.addEventListener('click', () => openPicker(id));
+  });
+  pickerBackdrop.addEventListener('click', closePicker);
+  historyBackdrop.addEventListener('click', closeHistory);
+  document.getElementById('history-close').addEventListener('click', closeHistory);
+  document.getElementById('open-history').addEventListener('click', openHistory);
+
+  // Swipe-down to close
+  function attachSwipeClose(el, closeFn) {
+    let startY = null, startT = 0;
+    el.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+      startT = Date.now();
+    }, { passive: true });
+    el.addEventListener('touchend', e => {
+      if (startY === null) return;
+      const dy = e.changedTouches[0].clientY - startY;
+      const dt = Date.now() - startT;
+      if (dy > 30 || (dy > 10 && dt < 250)) closeFn();
+      startY = null;
+    }, { passive: true });
+  }
+  attachSwipeClose(document.getElementById('picker-handle-area'), closePicker);
+  attachSwipeClose(document.getElementById('history-handle-area'), closeHistory);
+
+  // ===== Service worker =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
