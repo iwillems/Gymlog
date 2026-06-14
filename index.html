@@ -11,20 +11,43 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.json">
 <style>
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  --bg-base: #0a0a0c;
+  --bg-surface: #14141a;
+  --bg-tile: #17171c;
+  --bg-tile-active: #22222a;
+  --border-subtle: #2a2a30;
+  --border-stronger: #3a3a42;
+  --text-primary: #ffffff;
+  --text-secondary: #88888f;
+  --text-tertiary: #5a5a60;
+  --text-muted: #3a3a42;
+  --accent: #8aa3ff;
+  --done-fill: #1e5f3f;
+  --done-stroke: #2f8a5e;
+  --done-fill-active: #266b48;
+  --warn: #ffa940;
+}
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
   margin: 0; padding: 0;
-  background: #000; color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
   height: 100%;
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
   overscroll-behavior: none;
   touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 body {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(110, 120, 160, 0.10), transparent 65%),
+    radial-gradient(ellipse 70% 45% at 50% 100%, rgba(0, 0, 0, 0.6), transparent 75%),
+    var(--bg-base);
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -34,10 +57,22 @@ body {
 }
 header {
   text-align: center;
-  padding: 14px 0 6px;
-  font-size: 11px;
-  letter-spacing: 2.5px;
-  color: #6e6e73;
+  padding: 20px 0 12px;
+  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 200;
+  letter-spacing: 9px;
+  text-indent: 9px;
+  color: #d8d8e0;
+  position: relative;
+}
+header::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 4px;
+  transform: translateX(-50%);
+  width: 24px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
 }
 .stage {
   flex: 1;
@@ -45,7 +80,7 @@ header {
   align-items: center;
   justify-content: center;
   min-height: 0;
-  padding: 4px 0 8px;
+  padding: 6px 0 10px;
 }
 svg.floorplan {
   width: 100%;
@@ -54,16 +89,23 @@ svg.floorplan {
   display: block;
 }
 .device { cursor: pointer; }
-.device .device-bg { transition: fill 180ms, stroke 180ms; }
-.device:active .device-bg { fill: #2a2a2c; }
-.device.done .device-bg { fill: #1f5e2e; stroke: #34c759; }
-.device.done:active .device-bg { fill: #297b3d; }
+.device .device-bg {
+  transition: fill 180ms ease, stroke 180ms ease;
+}
+.device:active .device-bg { fill: var(--bg-tile-active); }
+.device.done .device-bg { fill: var(--done-fill); stroke: var(--done-stroke); }
+.device.done:active .device-bg { fill: var(--done-fill-active); }
+
+/* Refined drop-shadow on icons — gives "lift" without heaviness */
+.device > g[transform] {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
 
 /* Sheets */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.65);
   opacity: 0;
   pointer-events: none;
   transition: opacity 220ms ease;
@@ -77,63 +119,67 @@ svg.floorplan {
 .sheet {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  background: #1c1c1e;
-  border-radius: 18px 18px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 28%),
+    var(--bg-surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 22px 22px 0 0;
   transform: translateY(100%);
   transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.75);
 }
 .sheet.open { transform: translateY(0); }
 
 .sheet-handle-area {
-  padding: 8px 0 4px;
+  padding: 10px 0 4px;
   touch-action: none;
 }
 .sheet-handle {
-  width: 38px; height: 5px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 3px;
+  width: 40px; height: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
   margin: 0 auto;
 }
 .sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px 4px;
+  padding: 8px 20px 6px;
   min-height: 36px;
 }
 .sheet-title {
   font-size: 17px;
-  font-weight: 600;
-  color: #fff;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
 }
 .icon-btn {
-  background: rgba(255,255,255,0.08);
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   width: 36px; height: 36px;
   border-radius: 18px;
-  color: #fff;
+  color: var(--text-primary);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   padding: 0;
 }
-.icon-btn:active { background: rgba(255,255,255,0.18); }
+.icon-btn:active { background: rgba(255, 255, 255, 0.12); }
 .icon-btn svg {
   width: 18px; height: 18px;
   stroke: currentColor; fill: none;
-  stroke-width: 2;
+  stroke-width: 1.7;
   stroke-linecap: round; stroke-linejoin: round;
 }
 
 /* Picker wheels */
 .wheels-row {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px 12px;
+  gap: 10px;
+  padding: 14px 20px 14px;
 }
 .wheel-wrap {
   flex: 1;
@@ -141,32 +187,34 @@ svg.floorplan {
   min-width: 0;
 }
 .wheel-label {
-  font-size: 11px;
-  color: #8e8e93;
+  font-size: 10px;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 10px;
+  letter-spacing: 2.4px;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
 .wheel-container {
   position: relative;
   height: 200px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
   overflow: hidden;
   transition: transform 80ms ease-out, box-shadow 80ms ease-out;
 }
 .wheel-wrap.pulse .wheel-container {
-  transform: scale(1.04);
-  box-shadow: 0 0 14px rgba(255,255,255,0.2);
+  transform: scale(1.03);
+  box-shadow: 0 0 18px rgba(138, 163, 255, 0.18);
 }
 .wheel-container::before {
   content: '';
   position: absolute;
   left: 0; right: 0;
   top: 80px; height: 40px;
-  background: rgba(255,255,255,0.07);
-  border-top: 1.5px solid rgba(255,255,255,0.55);
-  border-bottom: 1.5px solid rgba(255,255,255,0.55);
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
   pointer-events: none;
   z-index: 2;
 }
@@ -188,81 +236,89 @@ svg.floorplan {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: rgba(255,255,255,0.42);
+  font-size: 19px;
+  color: rgba(255, 255, 255, 0.36);
   scroll-snap-align: center;
   scroll-snap-stop: always;
   font-variant-numeric: tabular-nums;
-  font-weight: 400;
-  transition: color 140ms ease, font-size 140ms ease, font-weight 140ms ease;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  transition: color 140ms ease, font-size 140ms ease, font-weight 140ms ease, letter-spacing 140ms ease;
 }
 .wheel-item.selected {
   font-size: 30px;
-  color: #fff;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 500;
+  letter-spacing: 1px;
 }
 
 /* Done toggle row */
 .modal-row {
-  padding: 6px 16px;
+  padding: 8px 20px;
 }
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255,255,255,0.06);
-  border-radius: 12px;
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 14px 16px;
   font-size: 15px;
+  font-weight: 400;
   cursor: pointer;
 }
-.toggle-row .toggle-label { color: #fff; }
+.toggle-row .toggle-label { color: var(--text-primary); letter-spacing: 0.2px; }
 .toggle-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
   width: 30px; height: 30px;
   border-radius: 15px;
-  border: 2px solid #555;
-  background: #1c1c1e;
+  border: 1.5px solid var(--border-stronger);
+  background: transparent;
   position: relative;
   margin: 0;
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 140ms ease, border-color 140ms ease;
 }
 .toggle-row input[type="checkbox"]:checked {
-  background: #34c759;
-  border-color: #34c759;
+  background: var(--done-fill);
+  border-color: var(--done-stroke);
 }
 .toggle-row input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
-  left: 8px; top: 4px;
-  width: 8px; height: 14px;
+  left: 9px; top: 4px;
+  width: 7px; height: 13px;
   border: solid #fff;
-  border-width: 0 2.5px 2.5px 0;
+  border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
 /* Timer */
 .btn-timer {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
   padding: 18px 24px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 16px;
   font-weight: 500;
+  letter-spacing: 0.3px;
   cursor: pointer;
   width: 100%;
   font-variant-numeric: tabular-nums;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.btn-timer:active:not(:disabled) { background: rgba(255,255,255,0.18); }
+.btn-timer:active:not(:disabled) { background: rgba(255, 255, 255, 0.10); }
 .btn-timer.counting {
-  background: rgba(255, 159, 10, 0.15);
-  color: #ff9f0a;
+  background: rgba(255, 169, 64, 0.07);
+  border-color: rgba(255, 169, 64, 0.28);
+  color: var(--warn);
   font-size: 34px;
-  font-weight: 600;
+  font-weight: 300;
+  letter-spacing: 2px;
   padding: 22px 24px;
   cursor: default;
 }
@@ -271,7 +327,7 @@ svg.floorplan {
 /* History */
 .history-list {
   overflow-y: auto;
-  padding: 4px 16px 16px;
+  padding: 4px 20px 16px;
   max-height: 60vh;
   -webkit-overflow-scrolling: touch;
 }
@@ -279,38 +335,40 @@ svg.floorplan {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 13px 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 14px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 14px;
 }
 .history-row:last-child { border-bottom: none; }
-.history-row .ts { color: #8e8e93; font-variant-numeric: tabular-nums; }
+.history-row .ts { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .history-row .val {
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
 }
 .history-empty {
   text-align: center;
-  color: #8e8e93;
+  color: var(--text-secondary);
   padding: 40px 16px;
   font-size: 14px;
 }
 .btn-row {
-  padding: 12px 16px 4px;
+  padding: 12px 20px 4px;
 }
 .btn-primary {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: none;
-  padding: 14px 24px;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  padding: 15px 24px;
+  border-radius: 14px;
   font-size: 16px;
   font-weight: 500;
+  letter-spacing: 0.3px;
   cursor: pointer;
   width: 100%;
 }
-.btn-primary:active { background: rgba(255,255,255,0.18); }
+.btn-primary:active { background: rgba(255, 255, 255, 0.10); }
 </style>
 </head>
 <body>
@@ -321,17 +379,17 @@ svg.floorplan {
   <svg class="floorplan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 600" preserveAspectRatio="xMidYMid meet">
     <!-- Bovenste ruimte (3 kolommen, 3 rijen partial) -->
     <rect x="10" y="15" width="373" height="320" rx="6" ry="6"
-          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
-    <text x="196.5" y="328" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE A</text>
+          fill="#0e0e14" stroke="#262630" stroke-width="1"/>
+    <text x="196.5" y="328" text-anchor="middle" fill="#3a3a42" font-size="10" letter-spacing="2">RUIMTE A</text>
 
     <!-- Onderste ruimte -->
     <rect x="10" y="345" width="373" height="235" rx="6" ry="6"
-          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
-    <text x="196.5" y="573" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE B</text>
+          fill="#0e0e14" stroke="#262630" stroke-width="1"/>
+    <text x="196.5" y="573" text-anchor="middle" fill="#3a3a42" font-size="10" letter-spacing="2">RUIMTE B</text>
 
     <!-- ROOM A row 1 — Chest press (col1), Abdominal (col2), Leg press (col3) -->
     <g class="device" data-id="1">
-      <rect class="device-bg" x="43" y="40" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(43,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="40" y1="6" x2="40" y2="34"/>
         <line x1="22" y1="22" x2="58" y2="22"/>
@@ -342,7 +400,7 @@ svg.floorplan {
       <text x="83" y="108" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">press</text>
     </g>
     <g class="device" data-id="2">
-      <rect class="device-bg" x="157" y="40" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="157" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(157,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="20" y1="6" x2="28" y2="34"/>
         <line x1="20" y1="34" x2="54" y2="34"/>
@@ -352,7 +410,7 @@ svg.floorplan {
       <text x="197" y="102" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Abdominal</text>
     </g>
     <g class="device" data-id="3">
-      <rect class="device-bg" x="270" y="40" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="270" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(270,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="34" x2="46" y2="10"/>
         <line x1="14" y1="34" x2="22" y2="34"/>
@@ -366,7 +424,7 @@ svg.floorplan {
 
     <!-- ROOM A row 2 — Back extension (col1) -->
     <g class="device" data-id="4">
-      <rect class="device-bg" x="43" y="140" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="140" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(43,140)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="26" y1="20" x2="40" y2="20"/>
         <line x1="46" y1="26" x2="58" y2="26"/>
@@ -380,7 +438,7 @@ svg.floorplan {
 
     <!-- ROOM A row 3 — Row (col1) -->
     <g class="device" data-id="5">
-      <rect class="device-bg" x="43" y="240" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="240" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(43,240)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="40" cy="10" r="3"/>
         <line x1="40" y1="13" x2="40" y2="34"/>
@@ -394,7 +452,7 @@ svg.floorplan {
 
     <!-- ROOM B row 1 — Pulldown (col1, links) -->
     <g class="device" data-id="6">
-      <rect class="device-bg" x="43" y="370" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="370" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(43,370)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="6" x2="66" y2="6"/>
         <line x1="24" y1="6" x2="24" y2="30"/>
@@ -407,7 +465,7 @@ svg.floorplan {
 
     <!-- ROOM B row 2 — Torso, Arm curl, Leg ext -->
     <g class="device" data-id="7">
-      <rect class="device-bg" x="43" y="470" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(43,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="40" cy="10" r="3"/>
         <line x1="40" y1="13" x2="40" y2="34"/>
@@ -418,7 +476,7 @@ svg.floorplan {
       <text x="83" y="532" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Torso</text>
     </g>
     <g class="device" data-id="8">
-      <rect class="device-bg" x="157" y="470" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="157" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(157,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="34" x2="36" y2="14"/>
         <line x1="14" y1="34" x2="24" y2="34"/>
@@ -430,7 +488,7 @@ svg.floorplan {
       <text x="197" y="538" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">curl</text>
     </g>
     <g class="device" data-id="9">
-      <rect class="device-bg" x="270" y="470" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <rect class="device-bg" x="270" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
       <g transform="translate(270,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="22" x2="32" y2="22"/>
         <line x1="12" y1="22" x2="12" y2="36"/>
