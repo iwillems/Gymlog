@@ -54,8 +54,10 @@ svg.floorplan {
   display: block;
 }
 .device { cursor: pointer; }
-.device .device-bg { transition: fill 120ms; }
+.device .device-bg { transition: fill 180ms, stroke 180ms; }
 .device:active .device-bg { fill: #2a2a2c; }
+.device.done .device-bg { fill: #1f5e2e; stroke: #34c759; }
+.device.done:active .device-bg { fill: #297b3d; }
 
 /* Sheets */
 .backdrop {
@@ -80,7 +82,7 @@ svg.floorplan {
   transform: translateY(100%);
   transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
-  max-height: 88vh;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
@@ -131,7 +133,7 @@ svg.floorplan {
 .wheels-row {
   display: flex;
   gap: 8px;
-  padding: 12px 16px 24px;
+  padding: 12px 16px 12px;
 }
 .wheel-wrap {
   flex: 1;
@@ -151,6 +153,11 @@ svg.floorplan {
   background: rgba(255,255,255,0.03);
   border-radius: 12px;
   overflow: hidden;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+}
+.wheel-wrap.pulse .wheel-container {
+  transform: scale(1.04);
+  box-shadow: 0 0 14px rgba(255,255,255,0.2);
 }
 .wheel-container::before,
 .wheel-container::after {
@@ -189,6 +196,72 @@ svg.floorplan {
   font-variant-numeric: tabular-nums;
   font-weight: 400;
 }
+
+/* Done toggle row */
+.modal-row {
+  padding: 6px 16px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.toggle-row .toggle-label { color: #fff; }
+.toggle-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 30px; height: 30px;
+  border-radius: 15px;
+  border: 2px solid #555;
+  background: #1c1c1e;
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-row input[type="checkbox"]:checked {
+  background: #34c759;
+  border-color: #34c759;
+}
+.toggle-row input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 8px; top: 4px;
+  width: 8px; height: 14px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+/* Timer */
+.btn-timer {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: none;
+  padding: 18px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  transition: background 120ms ease, color 120ms ease;
+}
+.btn-timer:active:not(:disabled) { background: rgba(255,255,255,0.18); }
+.btn-timer.counting {
+  background: rgba(255, 159, 10, 0.15);
+  color: #ff9f0a;
+  font-size: 34px;
+  font-weight: 600;
+  padding: 22px 24px;
+  cursor: default;
+}
+.btn-timer:disabled { opacity: 1; }
 
 /* History */
 .history-list {
@@ -241,64 +314,64 @@ svg.floorplan {
 
 <div class="stage">
   <svg class="floorplan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 600" preserveAspectRatio="xMidYMid meet">
-    <!-- linker ruimte -->
-    <rect x="10" y="20" width="160" height="520" rx="6" ry="6"
+    <!-- Bovenste ruimte -->
+    <rect x="10" y="15" width="373" height="270" rx="6" ry="6"
           fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
-    <!-- rechter ruimte -->
-    <rect x="170" y="20" width="213" height="520" rx="6" ry="6"
-          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
+    <text x="196.5" y="278" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE A</text>
 
-    <!-- LINKERRUIMTE -->
+    <!-- Onderste ruimte -->
+    <rect x="10" y="300" width="373" height="270" rx="6" ry="6"
+          fill="#0a0a0a" stroke="#5a5a5a" stroke-width="1.5"/>
+    <text x="196.5" y="563" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE B</text>
+
+    <!-- ROOM A: row 1 (3) — Chest press, Abdominale, Leg press -->
     <g class="device" data-id="1">
-      <rect class="device-bg" x="19" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="41" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="41" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">1</text>
+      <rect class="device-bg" x="43" y="45" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="83" y="80" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Chest</text>
+      <text x="83" y="95" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">press</text>
     </g>
     <g class="device" data-id="2">
-      <rect class="device-bg" x="68" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="90" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="90" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">2</text>
+      <rect class="device-bg" x="157" y="45" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="197" y="89" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Abdominale</text>
     </g>
     <g class="device" data-id="3">
-      <rect class="device-bg" x="117" y="42" width="44" height="64" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="139" y="71" text-anchor="middle" font-size="8.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="139" y="89" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" pointer-events="none">3</text>
+      <rect class="device-bg" x="270" y="45" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="310" y="80" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Leg</text>
+      <text x="310" y="95" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">press</text>
     </g>
+
+    <!-- ROOM A: row 2 (2) — Back extension, Row -->
     <g class="device" data-id="4">
-      <rect class="device-bg" x="19" y="122" width="58" height="58" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="48" y="148" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="48" y="167" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">4</text>
+      <rect class="device-bg" x="100" y="150" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="140" y="185" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Back</text>
+      <text x="140" y="200" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">extension</text>
     </g>
     <g class="device" data-id="5">
-      <rect class="device-bg" x="19" y="186" width="58" height="58" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="48" y="212" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="48" y="231" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">5</text>
+      <rect class="device-bg" x="213" y="150" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="253" y="194" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Row</text>
     </g>
 
-    <!-- RECHTERRUIMTE -->
+    <!-- ROOM B: row 1 (1) — Pulldown -->
     <g class="device" data-id="6">
-      <rect class="device-bg" x="200" y="40" width="80" height="72" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="240" y="74" text-anchor="middle" font-size="11" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="240" y="96" text-anchor="middle" font-size="18" font-weight="600" fill="#fff" pointer-events="none">6</text>
+      <rect class="device-bg" x="157" y="325" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="197" y="369" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Pulldown</text>
     </g>
+
+    <!-- ROOM B: row 2 (3) — Torso, Arm curl, Leg ext -->
     <g class="device" data-id="7">
-      <rect class="device-bg" x="185" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="214" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="214" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">7</text>
+      <rect class="device-bg" x="43" y="430" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="83" y="474" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Torso</text>
     </g>
     <g class="device" data-id="8">
-      <rect class="device-bg" x="253" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="282" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="282" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">8</text>
+      <rect class="device-bg" x="157" y="430" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="197" y="465" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Arm</text>
+      <text x="197" y="480" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">curl</text>
     </g>
     <g class="device" data-id="9">
-      <rect class="device-bg" x="321" y="250" width="58" height="62" rx="6" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="350" y="277" text-anchor="middle" font-size="9.5" fill="#bbb" pointer-events="none">Apparaat</text>
-      <text x="350" y="297" text-anchor="middle" font-size="15" font-weight="600" fill="#fff" pointer-events="none">9</text>
+      <rect class="device-bg" x="270" y="430" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
+      <text x="310" y="465" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Leg</text>
+      <text x="310" y="480" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">ext</text>
     </g>
-
-    <text x="90" y="565" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE A</text>
-    <text x="276.5" y="565" text-anchor="middle" fill="#444" font-size="10" letter-spacing="1.5">RUIMTE B</text>
   </svg>
 </div>
 
@@ -313,14 +386,23 @@ svg.floorplan {
     </button>
   </div>
   <div class="wheels-row">
-    <div class="wheel-wrap">
+    <div class="wheel-wrap" id="wheel1-wrap">
       <div class="wheel-label">Gewicht</div>
       <div class="wheel-container"><div class="wheel" id="wheel1"></div></div>
     </div>
-    <div class="wheel-wrap">
+    <div class="wheel-wrap" id="wheel2-wrap">
       <div class="wheel-label">Plus</div>
       <div class="wheel-container"><div class="wheel" id="wheel2"></div></div>
     </div>
+  </div>
+  <div class="modal-row">
+    <label class="toggle-row" for="done-toggle">
+      <span class="toggle-label">Vandaag gedaan</span>
+      <input type="checkbox" id="done-toggle">
+    </label>
+  </div>
+  <div class="modal-row">
+    <button class="btn-timer" id="timer-btn" type="button">Start rust</button>
   </div>
 </div>
 
@@ -343,10 +425,22 @@ svg.floorplan {
   'use strict';
 
   // ===== Config =====
-  const WHEEL1_VALUES = Array.from({length: 20}, (_, i) => (i + 1) * 10); // 10..200
+  const DEVICES = {
+    1: 'Chest press',
+    2: 'Abdominale',
+    3: 'Leg press',
+    4: 'Back extension',
+    5: 'Row',
+    6: 'Pulldown',
+    7: 'Torso',
+    8: 'Arm curl',
+    9: 'Leg ext'
+  };
+  const WHEEL1_VALUES = [70, 90, 110, 130, 150, 170];
   const WHEEL2_VALUES = [0, 5, 10, 15];
   const ITEM_HEIGHT = 40;
   const HISTORY_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 3 maanden
+  const REST_SECONDS = 60;
 
   // ===== Storage =====
   const STORE = {
@@ -355,7 +449,7 @@ svg.floorplan {
         const v = JSON.parse(localStorage.getItem('current_' + id));
         if (v && typeof v.wheel1 === 'number' && typeof v.wheel2 === 'number') return v;
       } catch (e) {}
-      return { wheel1: 10, wheel2: 0 };
+      return { wheel1: WHEEL1_VALUES[0], wheel2: 0 };
     },
     setCurrent(id, val) {
       localStorage.setItem('current_' + id, JSON.stringify(val));
@@ -371,8 +465,85 @@ svg.floorplan {
       const h = this.getHistory(id);
       h.push(entry);
       localStorage.setItem('history_' + id, JSON.stringify(h));
+    },
+    getDoneDate(id) {
+      return localStorage.getItem('done_' + id);
+    },
+    setDoneDate(id, dateStr) {
+      if (dateStr) localStorage.setItem('done_' + id, dateStr);
+      else localStorage.removeItem('done_' + id);
     }
   };
+
+  // ===== Today =====
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+           String(d.getMonth() + 1).padStart(2, '0') + '-' +
+           String(d.getDate()).padStart(2, '0');
+  }
+  function isDoneToday(id) {
+    return STORE.getDoneDate(id) === todayStr();
+  }
+
+  // ===== Audio (Web Audio API) =====
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (audioCtx) return audioCtx;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    } catch (e) {}
+    return audioCtx;
+  }
+  function unlockAudio() {
+    const ctx = getAudioCtx();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  function playTick() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 1400;
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  }
+  function playBeep() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const now = ctx.currentTime;
+    function tone(start, dur, freq) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(0.25, now + start + 0.01);
+      gain.gain.setValueAtTime(0.25, now + start + dur - 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+      osc.start(now + start);
+      osc.stop(now + start + dur + 0.02);
+    }
+    tone(0,    0.18, 880);
+    tone(0.22, 0.28, 1175);
+  }
+  function tinyVibrate() {
+    if (navigator.vibrate) {
+      try { navigator.vibrate(10); } catch (e) {}
+    }
+  }
 
   // ===== Wheel impl =====
   function buildWheel(el, values, current) {
@@ -388,15 +559,37 @@ svg.floorplan {
     el.appendChild(list);
     el._values = values;
     const idx = Math.max(0, values.indexOf(current));
-    // Set immediately and again after a tick to defeat scroll-snap settling
+    el._lastIndex = idx;
+    el._suppressFeedback = true;
     el.scrollTop = idx * ITEM_HEIGHT;
-    requestAnimationFrame(() => { el.scrollTop = idx * ITEM_HEIGHT; });
+    requestAnimationFrame(() => {
+      el.scrollTop = idx * ITEM_HEIGHT;
+      // allow feedback after settle
+      setTimeout(() => { el._suppressFeedback = false; }, 250);
+    });
   }
   function getWheelValue(el) {
     if (!el._values) return null;
     const idx = Math.round(el.scrollTop / ITEM_HEIGHT);
     const safe = Math.max(0, Math.min(el._values.length - 1, idx));
     return el._values[safe];
+  }
+  function attachWheelFeedback(el, wrap) {
+    el.addEventListener('scroll', () => {
+      if (!el._values) return;
+      const idx = Math.round(el.scrollTop / ITEM_HEIGHT);
+      if (idx < 0 || idx >= el._values.length) return;
+      if (idx === el._lastIndex) return;
+      el._lastIndex = idx;
+      if (el._suppressFeedback) return;
+      playTick();
+      tinyVibrate();
+      wrap.classList.remove('pulse');
+      // force reflow so animation restarts
+      void wrap.offsetWidth;
+      wrap.classList.add('pulse');
+      setTimeout(() => wrap.classList.remove('pulse'), 100);
+    }, { passive: true });
   }
 
   // ===== Refs =====
@@ -405,6 +598,10 @@ svg.floorplan {
   const pickerTitle    = document.getElementById('picker-title');
   const wheel1         = document.getElementById('wheel1');
   const wheel2         = document.getElementById('wheel2');
+  const wheel1Wrap     = document.getElementById('wheel1-wrap');
+  const wheel2Wrap     = document.getElementById('wheel2-wrap');
+  const doneToggle     = document.getElementById('done-toggle');
+  const timerBtn       = document.getElementById('timer-btn');
   const historyBackdrop= document.getElementById('history-backdrop');
   const historySheet   = document.getElementById('history-sheet');
   const historyTitle   = document.getElementById('history-title');
@@ -412,20 +609,77 @@ svg.floorplan {
 
   let activeDeviceId = null;
   let openedSnapshot = null;
+  let timerInterval = null;
+  let timerRemaining = REST_SECONDS;
+
+  attachWheelFeedback(wheel1, wheel1Wrap);
+  attachWheelFeedback(wheel2, wheel2Wrap);
+
+  // ===== Timer =====
+  function resetTimerUI() {
+    timerBtn.classList.remove('counting');
+    timerBtn.textContent = 'Start rust';
+    timerBtn.disabled = false;
+  }
+  function startTimer() {
+    if (timerInterval) return;
+    timerRemaining = REST_SECONDS;
+    timerBtn.classList.add('counting');
+    timerBtn.textContent = timerRemaining + 's';
+    timerBtn.disabled = true;
+    unlockAudio();
+    timerInterval = setInterval(() => {
+      timerRemaining -= 1;
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        playBeep();
+        tinyVibrate();
+        resetTimerUI();
+      } else {
+        timerBtn.textContent = timerRemaining + 's';
+      }
+    }, 1000);
+  }
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    resetTimerUI();
+  }
+  timerBtn.addEventListener('click', () => {
+    if (timerInterval) return;
+    startTimer();
+  });
+
+  // ===== Done state rendering on floorplan =====
+  function renderDoneStates() {
+    const today = todayStr();
+    document.querySelectorAll('.device').forEach(g => {
+      const id = parseInt(g.dataset.id, 10);
+      if (STORE.getDoneDate(id) === today) g.classList.add('done');
+      else g.classList.remove('done');
+    });
+  }
 
   // ===== Picker =====
   function openPicker(id) {
+    unlockAudio();
     activeDeviceId = id;
     const cur = STORE.getCurrent(id);
     openedSnapshot = { wheel1: cur.wheel1, wheel2: cur.wheel2 };
-    pickerTitle.textContent = 'Apparaat ' + id;
+    pickerTitle.textContent = DEVICES[id] || ('Apparaat ' + id);
     buildWheel(wheel1, WHEEL1_VALUES, cur.wheel1);
     buildWheel(wheel2, WHEEL2_VALUES, cur.wheel2);
+    doneToggle.checked = isDoneToday(id);
+    resetTimerUI();
     pickerBackdrop.classList.add('open');
     pickerSheet.classList.add('open');
   }
   function closePicker() {
     if (activeDeviceId === null) return;
+    stopTimer();
     const w1 = getWheelValue(wheel1);
     const w2 = getWheelValue(wheel2);
     if (w1 !== null && w2 !== null) {
@@ -441,6 +695,18 @@ svg.floorplan {
     openedSnapshot = null;
   }
 
+  // Done toggle
+  doneToggle.addEventListener('change', () => {
+    if (activeDeviceId === null) return;
+    if (doneToggle.checked) {
+      STORE.setDoneDate(activeDeviceId, todayStr());
+    } else {
+      STORE.setDoneDate(activeDeviceId, null);
+    }
+    renderDoneStates();
+    tinyVibrate();
+  });
+
   // ===== History =====
   function fmtDate(ts) {
     const d = new Date(ts);
@@ -451,7 +717,7 @@ svg.floorplan {
   function openHistory() {
     if (activeDeviceId === null) return;
     const id = activeDeviceId;
-    historyTitle.textContent = 'Apparaat ' + id + ' — geschiedenis';
+    historyTitle.textContent = (DEVICES[id] || ('Apparaat ' + id)) + ' — geschiedenis';
     const cutoff = Date.now() - HISTORY_WINDOW_MS;
     const filtered = STORE.getHistory(id)
       .filter(h => h && typeof h.ts === 'number' && h.ts >= cutoff)
@@ -512,6 +778,13 @@ svg.floorplan {
   }
   attachSwipeClose(document.getElementById('picker-handle-area'), closePicker);
   attachSwipeClose(document.getElementById('history-handle-area'), closeHistory);
+
+  // ===== Midnight reset / refresh =====
+  renderDoneStates();
+  window.addEventListener('focus', renderDoneStates);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) renderDoneStates();
+  });
 
   // ===== Service worker =====
   if ('serviceWorker' in navigator) {
