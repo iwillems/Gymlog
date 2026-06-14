@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v8';
+const CACHE = 'gymlog-v9-premium';
 const ASSETS = [
   './',
   './index.html',
@@ -26,6 +26,30 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Network-first for HTML / navigations so updates land immediately.
+  const isHTML =
+    event.request.mode === 'navigate' ||
+    event.request.destination === 'document' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('/');
+
+  if (isHTML) {
+    event.respondWith(
+      fetch(event.request)
+        .then(resp => {
+          if (resp && resp.status === 200 && resp.type === 'basic') {
+            const clone = resp.clone();
+            caches.open(CACHE).then(cache => cache.put(event.request, clone));
+          }
+          return resp;
+        })
+        .catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (icons, manifest, etc.).
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
