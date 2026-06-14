@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v11-progress';
+const CACHE = 'gymlog-v12-order';
 const ASSETS = [
   './',
   './index.html',
