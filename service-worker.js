@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v10-color';
+const CACHE = 'gymlog-v11-progress';
 const ASSETS = [
   './',
   './index.html',
