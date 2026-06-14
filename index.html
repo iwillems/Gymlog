@@ -337,7 +337,7 @@ svg.floorplan {
     </g>
     <g class="device" data-id="2">
       <rect class="device-bg" x="157" y="40" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
-      <text x="197" y="84" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Abdominale</text>
+      <text x="197" y="84" text-anchor="middle" font-size="11" fill="#fff" pointer-events="none">Abdominal</text>
     </g>
     <g class="device" data-id="3">
       <rect class="device-bg" x="270" y="40" width="80" height="80" rx="8" fill="#161616" stroke="#8a8a8a" stroke-width="1"/>
@@ -434,7 +434,7 @@ svg.floorplan {
   // ===== Config =====
   const DEVICES = {
     1: 'Chest press',
-    2: 'Abdominale',
+    2: 'Abdominal',
     3: 'Leg press',
     4: 'Back extension',
     5: 'Row',
@@ -443,7 +443,7 @@ svg.floorplan {
     8: 'Arm curl',
     9: 'Leg ext'
   };
-  const WHEEL1_VALUES = [70, 90, 110, 130, 150, 170];
+  const WHEEL1_VALUES = [30, 50, 70, 90, 110, 130, 150, 170];
   const WHEEL2_VALUES = [0, 5, 10, 15];
   const ITEM_HEIGHT = 40;
   const HISTORY_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 3 maanden
@@ -814,6 +814,24 @@ svg.floorplan {
   }
   attachSwipeClose(document.getElementById('picker-handle-area'), closePicker);
   attachSwipeClose(document.getElementById('history-handle-area'), closeHistory);
+
+  // ===== Seed initial values (only if not already set) =====
+  const SEED = {
+    1: { wheel1: 50,  wheel2: 10 },  // Chest press
+    2: { wheel1: 110, wheel2: 0  },  // Abdominal
+    3: { wheel1: 130, wheel2: 10 },  // Leg press
+    4: { wheel1: 130, wheel2: 0  },  // Back extension
+    5: { wheel1: 90,  wheel2: 10 },  // Row
+    6: { wheel1: 70,  wheel2: 0  },  // Pulldown
+    7: { wheel1: 50,  wheel2: 0  },  // Torso
+    8: { wheel1: 30,  wheel2: 15 },  // Arm curl
+    9: { wheel1: 50,  wheel2: 5  }   // Leg ext
+  };
+  Object.keys(SEED).forEach(id => {
+    if (localStorage.getItem('current_' + id) === null) {
+      STORE.setCurrent(id, SEED[id]);
+    }
+  });
 
   // ===== Midnight reset / refresh =====
   renderDoneStates();
