@@ -815,7 +815,8 @@ svg.floorplan {
   attachSwipeClose(document.getElementById('picker-handle-area'), closePicker);
   attachSwipeClose(document.getElementById('history-handle-area'), closeHistory);
 
-  // ===== Seed initial values (only if not already set) =====
+  // ===== Seed initial values (forced once per seed_version) =====
+  const SEED_VERSION = 'v3';
   const SEED = {
     1: { wheel1: 50,  wheel2: 10 },  // Chest press
     2: { wheel1: 110, wheel2: 0  },  // Abdominal
@@ -827,11 +828,12 @@ svg.floorplan {
     8: { wheel1: 30,  wheel2: 15 },  // Arm curl
     9: { wheel1: 50,  wheel2: 5  }   // Leg ext
   };
-  Object.keys(SEED).forEach(id => {
-    if (localStorage.getItem('current_' + id) === null) {
+  if (localStorage.getItem('seed_version') !== SEED_VERSION) {
+    Object.keys(SEED).forEach(id => {
       STORE.setCurrent(id, SEED[id]);
-    }
-  });
+    });
+    localStorage.setItem('seed_version', SEED_VERSION);
+  }
 
   // ===== Midnight reset / refresh =====
   renderDoneStates();
