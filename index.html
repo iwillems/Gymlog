@@ -45,8 +45,10 @@ html, body {
 }
 body {
   background:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(110, 120, 160, 0.10), transparent 65%),
-    radial-gradient(ellipse 70% 45% at 50% 100%, rgba(0, 0, 0, 0.6), transparent 75%),
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(130, 115, 180, 0.11), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 70% 35%, rgba(85, 125, 170, 0.05), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 25% 60%, rgba(170, 110, 150, 0.04), transparent 75%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(20, 8, 32, 0.65), transparent 75%),
     var(--bg-base);
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -63,8 +65,12 @@ header {
   font-weight: 200;
   letter-spacing: 9px;
   text-indent: 9px;
-  color: #d8d8e0;
   position: relative;
+  background: linear-gradient(125deg, #c8d2e4 0%, #dccad3 50%, #c4cce0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 header::after {
   content: '';
@@ -100,6 +106,17 @@ svg.floorplan {
 .device > g[transform] {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
 }
+
+/* Desaturated per-device icon tints (CSS overrides inline stroke="#fff") */
+.device[data-id="1"] > g[transform] { stroke: #7a9cc6; }  /* Chest press — cool blue */
+.device[data-id="2"] > g[transform] { stroke: #c69988; }  /* Abdominal — soft coral */
+.device[data-id="3"] > g[transform] { stroke: #7ea693; }  /* Leg press — green-grey */
+.device[data-id="4"] > g[transform] { stroke: #9a8fb5; }  /* Back extension — purple-grey */
+.device[data-id="5"] > g[transform] { stroke: #7eb0b5; }  /* Row — cyan-grey */
+.device[data-id="6"] > g[transform] { stroke: #b8a16c; }  /* Pulldown — amber-grey */
+.device[data-id="7"] > g[transform] { stroke: #b58a9a; }  /* Torso — pink-grey */
+.device[data-id="8"] > g[transform] { stroke: #8ab3a8; }  /* Arm curl — turquoise */
+.device[data-id="9"] > g[transform] { stroke: #a39bc4; }  /* Leg ext — lavender */
 
 /* Sheets */
 .backdrop {
@@ -247,7 +264,7 @@ svg.floorplan {
 }
 .wheel-item.selected {
   font-size: 30px;
-  color: var(--text-primary);
+  color: #dfe7ee;
   font-weight: 500;
   letter-spacing: 1px;
 }
@@ -377,15 +394,15 @@ svg.floorplan {
 
 <div class="stage">
   <svg class="floorplan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 600" preserveAspectRatio="xMidYMid meet">
-    <!-- Bovenste ruimte (3 kolommen, 3 rijen partial) -->
+    <!-- Bovenste ruimte (3 kolommen, 3 rijen partial) — subtiel cool getint -->
     <rect x="10" y="15" width="373" height="320" rx="6" ry="6"
-          fill="#0e0e14" stroke="#262630" stroke-width="1"/>
-    <text x="196.5" y="328" text-anchor="middle" fill="#3a3a42" font-size="10" letter-spacing="2">RUIMTE A</text>
+          fill="#0c0e16" stroke="#252a35" stroke-width="1"/>
+    <text x="196.5" y="328" text-anchor="middle" fill="#3a3e48" font-size="10" letter-spacing="2">RUIMTE A</text>
 
-    <!-- Onderste ruimte -->
+    <!-- Onderste ruimte — subtiel warm getint -->
     <rect x="10" y="345" width="373" height="235" rx="6" ry="6"
-          fill="#0e0e14" stroke="#262630" stroke-width="1"/>
-    <text x="196.5" y="573" text-anchor="middle" fill="#3a3a42" font-size="10" letter-spacing="2">RUIMTE B</text>
+          fill="#100d16" stroke="#2a2535" stroke-width="1"/>
+    <text x="196.5" y="573" text-anchor="middle" fill="#3e3a48" font-size="10" letter-spacing="2">RUIMTE B</text>
 
     <!-- ROOM A row 1 — Chest press (col1), Abdominal (col2), Leg press (col3) -->
     <g class="device" data-id="1">
