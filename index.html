@@ -574,16 +574,44 @@ svg.floorplan {
     });
     el.appendChild(list);
     el._values = values;
-    const idx = Math.max(0, values.indexOf(current));
+    let idx = values.indexOf(current);
+    if (idx < 0) {
+      // current value isn't in the (possibly updated) values list — snap to nearest
+      let bestDelta = Infinity;
+      values.forEach((v, i) => {
+        const d = Math.abs(v - current);
+        if (d < bestDelta) { bestDelta = d; idx = i; }
+      });
+      if (idx < 0) idx = 0;
+    }
+    const target = idx * ITEM_HEIGHT;
     el._lastIndex = idx;
     el._selectedIdx = -1;
     el._suppressFeedback = true;
-    el.scrollTop = idx * ITEM_HEIGHT;
     setSelectedItem(el, idx);
+
+    // iOS Safari + scroll-snap-type:y mandatory hijacks programmatic scrollTop
+    // right after DOM rewrite (snap points unstable). Disable snap, set position,
+    // let layout settle, then re-enable.
+    el.style.scrollSnapType = 'none';
+    void el.offsetHeight; // force layout
+    el.scrollTop = target;
+
     requestAnimationFrame(() => {
-      el.scrollTop = idx * ITEM_HEIGHT;
-      setSelectedItem(el, idx);
-      setTimeout(() => { el._suppressFeedback = false; }, 250);
+      el.scrollTop = target;
+      requestAnimationFrame(() => {
+        el.scrollTop = target;
+        // Re-enable snap and re-assert exact position
+        el.style.scrollSnapType = '';
+        el.scrollTop = target;
+        setTimeout(() => {
+          if (Math.abs(el.scrollTop - target) > 0.5) {
+            el.scrollTop = target;
+          }
+          setSelectedItem(el, idx);
+          el._suppressFeedback = false;
+        }, 200);
+      });
     });
   }
   function getWheelValue(el) {
