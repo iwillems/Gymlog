@@ -392,6 +392,54 @@ svg.floorplan {
   width: 100%;
 }
 .btn-primary:active { background: rgba(255, 255, 255, 0.10); }
+
+/* Rust voorbij flash */
+.rest-flash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 200;
+  transition: opacity 280ms ease;
+  background: radial-gradient(circle at center, rgba(47, 138, 94, 0.28), transparent 65%);
+}
+.rest-flash.show { opacity: 1; }
+.rest-flash-inner {
+  text-align: center;
+  background: rgba(20, 50, 36, 0.92);
+  padding: 26px 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(47, 138, 94, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+.rest-flash-check {
+  font-size: 52px;
+  color: #5dc491;
+  line-height: 1;
+  font-weight: 300;
+}
+.rest-flash-text {
+  margin-top: 6px;
+  color: #dfe7ee;
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  font-weight: 400;
+}
+
+/* 9/9 felicitatie confetti canvas */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 300;
+  pointer-events: none;
+  display: none;
+}
+.confetti-canvas.active { display: block; }
 </style>
 </head>
 <body>
@@ -595,6 +643,17 @@ svg.floorplan {
     <button class="btn-primary" id="history-close">Sluiten</button>
   </div>
 </div>
+
+<!-- Rust voorbij flash -->
+<div class="rest-flash" id="rest-flash" aria-hidden="true">
+  <div class="rest-flash-inner">
+    <div class="rest-flash-check">✓</div>
+    <div class="rest-flash-text">Rust voorbij</div>
+  </div>
+</div>
+
+<!-- 9/9 confetti canvas -->
+<canvas class="confetti-canvas" id="confetti-canvas" aria-hidden="true"></canvas>
 
 <script>
 (function() {
@@ -843,46 +902,88 @@ svg.floorplan {
   let activeDeviceId = null;
   let openedSnapshot = null;
   let timerInterval = null;
-  let timerRemaining = REST_SECONDS;
 
   attachWheelFeedback(wheel1, wheel1Wrap);
   attachWheelFeedback(wheel2, wheel2Wrap);
 
-  // ===== Timer =====
+  // ===== Timer (background-safe via timestamp in localStorage) =====
+  const TIMER_END_KEY = 'rest_timer_end';
+  const TIMER_ALERT_KEY = 'rest_timer_alert_fired';
+
+  function isTimerRunning() {
+    return localStorage.getItem(TIMER_END_KEY) !== null;
+  }
   function resetTimerUI() {
+    if (!timerBtn) return;
     timerBtn.classList.remove('counting');
     timerBtn.textContent = 'Start rust';
     timerBtn.disabled = false;
   }
-  function startTimer() {
-    if (timerInterval) return;
-    timerRemaining = REST_SECONDS;
-    timerBtn.classList.add('counting');
-    timerBtn.textContent = timerRemaining + 's';
-    timerBtn.disabled = true;
-    unlockAudio();
-    timerInterval = setInterval(() => {
-      timerRemaining -= 1;
-      if (timerRemaining <= 0) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+  function updateTimerUI() {
+    if (!timerBtn) return;
+    if (!isTimerRunning()) { resetTimerUI(); return; }
+    const end = parseInt(localStorage.getItem(TIMER_END_KEY), 10);
+    const remaining = Math.ceil((end - Date.now()) / 1000);
+    if (remaining > 0) {
+      timerBtn.classList.add('counting');
+      timerBtn.disabled = true;
+      timerBtn.textContent = remaining + 's';
+    } else {
+      resetTimerUI();
+    }
+  }
+  function clearTimerStorage() {
+    localStorage.removeItem(TIMER_END_KEY);
+    localStorage.removeItem(TIMER_ALERT_KEY);
+  }
+  function globalTimerTick() {
+    if (!isTimerRunning()) {
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      return;
+    }
+    const end = parseInt(localStorage.getItem(TIMER_END_KEY), 10);
+    const remaining = Math.ceil((end - Date.now()) / 1000);
+    if (remaining > 0) {
+      // Only update button if picker modal is open
+      if (timerBtn && pickerSheet.classList.contains('open')) {
+        timerBtn.classList.add('counting');
+        timerBtn.disabled = true;
+        timerBtn.textContent = remaining + 's';
+      }
+    } else {
+      // Rust voorbij
+      if (localStorage.getItem(TIMER_ALERT_KEY) !== '1') {
+        localStorage.setItem(TIMER_ALERT_KEY, '1');
         playBeep();
         tinyVibrate();
-        resetTimerUI();
-      } else {
-        timerBtn.textContent = timerRemaining + 's';
+        showRestDoneAlert();
       }
-    }, 1000);
-  }
-  function stopTimer() {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
+      clearTimerStorage();
+      resetTimerUI();
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     }
-    resetTimerUI();
+  }
+  function ensureGlobalTimerLoop() {
+    if (timerInterval) return;
+    timerInterval = setInterval(globalTimerTick, 250);
+  }
+  function startTimer() {
+    if (isTimerRunning()) return;
+    const end = Date.now() + REST_SECONDS * 1000;
+    localStorage.setItem(TIMER_END_KEY, String(end));
+    localStorage.removeItem(TIMER_ALERT_KEY);
+    unlockAudio();
+    updateTimerUI();
+    ensureGlobalTimerLoop();
+  }
+  function showRestDoneAlert() {
+    const flash = document.getElementById('rest-flash');
+    if (!flash) return;
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1800);
   }
   timerBtn.addEventListener('click', () => {
-    if (timerInterval) return;
+    if (isTimerRunning()) return;
     startTimer();
   });
 
@@ -919,13 +1020,14 @@ svg.floorplan {
     buildWheel(wheel1, WHEEL1_VALUES, cur.wheel1);
     buildWheel(wheel2, WHEEL2_VALUES, cur.wheel2);
     doneToggle.checked = isDoneToday(id);
-    resetTimerUI();
+    updateTimerUI();
+    if (isTimerRunning()) ensureGlobalTimerLoop();
     pickerBackdrop.classList.add('open');
     pickerSheet.classList.add('open');
   }
   function closePicker() {
     if (activeDeviceId === null) return;
-    stopTimer();
+    // NOTE: timer keeps running in background — do NOT stop here
     const w1 = getWheelValue(wheel1);
     const w2 = getWheelValue(wheel2);
     if (w1 !== null && w2 !== null) {
@@ -941,17 +1043,102 @@ svg.floorplan {
     openedSnapshot = null;
   }
 
-  // Done toggle
+  // Done toggle — saves, closes modal, and triggers 9/9 celebration if reached
   doneToggle.addEventListener('change', () => {
     if (activeDeviceId === null) return;
-    if (doneToggle.checked) {
+    const wasChecked = doneToggle.checked;
+    if (wasChecked) {
       STORE.setDoneDate(activeDeviceId, todayStr());
     } else {
       STORE.setDoneDate(activeDeviceId, null);
     }
+    // Recompute done count after the change
+    const today = todayStr();
+    let doneCount = 0;
+    for (let i = 1; i <= TOTAL_DEVICES; i++) {
+      if (STORE.getDoneDate(i) === today) doneCount++;
+    }
     renderDoneStates();
     tinyVibrate();
+    closePicker();
+    // Celebrate if just reached 9/9 by checking (not by unchecking)
+    if (wasChecked && doneCount === TOTAL_DEVICES) {
+      setTimeout(triggerCelebration, 360); // after modal close anim
+    }
   });
+
+  // ===== 9/9 celebration: 2s confetti, then reset all done flags =====
+  function triggerCelebration() {
+    const canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.classList.add('active');
+
+    const colors = ['#7a9cc6', '#c69988', '#7ea693', '#9a8fb5', '#7eb0b5',
+                    '#b8a16c', '#b58a9a', '#8ab3a8', '#a39bc4', '#5dc491', '#ffa940'];
+    const particles = [];
+
+    function burst(ox, oy, count) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 10;
+        particles.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 5,
+          gravity: 0.22,
+          size: 4 + Math.random() * 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * Math.PI,
+          rotSpeed: (Math.random() - 0.5) * 0.5,
+          life: 1
+        });
+      }
+    }
+    burst(W * 0.5, H * 0.4, 55);
+    setTimeout(() => burst(W * 0.25, H * 0.5, 40), 280);
+    setTimeout(() => burst(W * 0.75, H * 0.5, 40), 560);
+
+    const start = Date.now();
+    function frame() {
+      const elapsed = Date.now() - start;
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.vy += p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.life -= 0.008;
+        if (p.life > 0) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        }
+      }
+      if (elapsed < 2000) {
+        requestAnimationFrame(frame);
+      } else {
+        ctx.clearRect(0, 0, W, H);
+        canvas.classList.remove('active');
+        // Reset all 9 done flags
+        for (let i = 1; i <= TOTAL_DEVICES; i++) STORE.setDoneDate(i, null);
+        renderDoneStates();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
 
   // ===== History =====
   function fmtDate(ts) {
@@ -1045,11 +1232,21 @@ svg.floorplan {
     localStorage.setItem('seed_version', SEED_VERSION);
   }
 
-  // ===== Midnight reset / refresh =====
+  // ===== Midnight reset / refresh + timer resume =====
   renderDoneStates();
-  window.addEventListener('focus', renderDoneStates);
+  if (isTimerRunning()) {
+    globalTimerTick();      // immediate evaluation (may fire alert if expired while closed)
+    if (isTimerRunning()) ensureGlobalTimerLoop();
+  }
+  window.addEventListener('focus', () => {
+    renderDoneStates();
+    if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
+  });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) renderDoneStates();
+    if (!document.hidden) {
+      renderDoneStates();
+      if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
+    }
   });
 
   // ===== Service worker =====
