@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v15-notes-rest';
+const CACHE = 'gymlog-v16-apple';
 const ASSETS = [
   './',
   './index.html',

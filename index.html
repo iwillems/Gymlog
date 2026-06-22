@@ -13,27 +13,33 @@
 <style>
 :root {
   color-scheme: dark;
-  --bg-base: #0a0a0c;
-  --bg-surface: #14141a;
-  --bg-tile: #17171c;
-  --bg-tile-active: #22222a;
-  --border-subtle: #2a2a30;
-  --border-stronger: #3a3a42;
+  /* iOS-system inspired palette */
+  --bg-base: #000308;
+  --bg-surface: rgba(28, 28, 30, 0.92);
+  --bg-tile: #1c1c1e;
+  --bg-tile-active: #2c2c2e;
+  --bg-elevated: #2c2c2e;
+  --separator: rgba(255, 255, 255, 0.08);
+  --separator-strong: rgba(255, 255, 255, 0.15);
   --text-primary: #ffffff;
-  --text-secondary: #88888f;
-  --text-tertiary: #5a5a60;
-  --text-muted: #3a3a42;
-  --accent: #8aa3ff;
+  --text-secondary: #8e8e93;
+  --text-tertiary: #48484a;
+  --text-quaternary: rgba(235, 235, 245, 0.30);
+  --accent: #0a84ff;
+  --success: #34c759;
   --done-fill: #1e5f3f;
   --done-stroke: #2f8a5e;
   --done-fill-active: #266b48;
   --warn: #ffa940;
+  /* Apple easing */
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
   margin: 0; padding: 0;
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-weight: 400;
   height: 100%;
   overflow: hidden;
   -webkit-user-select: none;
@@ -44,12 +50,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 body {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(130, 115, 180, 0.11), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 70% 35%, rgba(85, 125, 170, 0.05), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 25% 60%, rgba(170, 110, 150, 0.04), transparent 75%),
-    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(20, 8, 32, 0.65), transparent 75%),
-    var(--bg-base);
+  background: radial-gradient(ellipse 80% 45% at 50% 0%, rgba(60, 70, 110, 0.06), transparent 60%), var(--bg-base);
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -59,18 +60,14 @@ body {
 }
 header {
   text-align: center;
-  padding: 20px 0 12px;
-  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "Inter", system-ui, sans-serif;
+  padding: 18px 0 10px;
+  font-family: -apple-system, "SF Pro Display", system-ui, sans-serif;
   font-size: 13px;
-  font-weight: 200;
-  letter-spacing: 9px;
-  text-indent: 9px;
+  font-weight: 300;
+  letter-spacing: 8px;
+  text-indent: 8px;
   position: relative;
-  background: linear-gradient(125deg, #c8d2e4 0%, #dccad3 50%, #c4cce0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: #d4d4d8;
 }
 header::after {
   content: '';
@@ -96,42 +93,36 @@ svg.floorplan {
 }
 .device { cursor: pointer; }
 .device .device-bg {
-  transition: fill 180ms ease, stroke 180ms ease;
+  transition: fill 200ms var(--ease-ios), stroke 200ms var(--ease-ios);
 }
 .device:active .device-bg { fill: var(--bg-tile-active); }
 .device.done .device-bg { fill: var(--done-fill); stroke: var(--done-stroke); }
 .device.done:active .device-bg { fill: var(--done-fill-active); }
 
-/* Refined drop-shadow on icons — gives "lift" without heaviness */
+/* Subtle drop-shadow on icons */
 .device > g[transform] {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
 }
 
-/* Vandaag-tegel (read-only progress ring) */
-.progress-tile { cursor: default; }
-.progress-tile .tile-bg { transition: fill 180ms ease; }
-.progress-tile:active .tile-bg { fill: var(--bg-tile-active); }
-#progress-ring { transition: stroke-dashoffset 420ms cubic-bezier(0.32, 0.72, 0, 1); }
-
-/* Desaturated per-device icon tints (CSS overrides inline stroke="#fff") */
-.device[data-id="1"] > g[transform] { stroke: #7a9cc6; }  /* Chest press — cool blue */
-.device[data-id="2"] > g[transform] { stroke: #c69988; }  /* Abdominal — soft coral */
-.device[data-id="3"] > g[transform] { stroke: #7ea693; }  /* Leg press — green-grey */
-.device[data-id="4"] > g[transform] { stroke: #9a8fb5; }  /* Back extension — purple-grey */
-.device[data-id="5"] > g[transform] { stroke: #7eb0b5; }  /* Row — cyan-grey */
-.device[data-id="6"] > g[transform] { stroke: #b8a16c; }  /* Pulldown — amber-grey */
-.device[data-id="7"] > g[transform] { stroke: #b58a9a; }  /* Torso — pink-grey */
-.device[data-id="8"] > g[transform] { stroke: #8ab3a8; }  /* Arm curl — turquoise */
-.device[data-id="9"] > g[transform] { stroke: #a39bc4; }  /* Leg ext — lavender */
+/* Apple-toned per-device icon tints (desaturated, CSS overrides inline stroke="#fff") */
+.device[data-id="1"] > g[transform] { stroke: #7d92ad; }  /* Chest press */
+.device[data-id="2"] > g[transform] { stroke: #b69588; }  /* Abdominal */
+.device[data-id="3"] > g[transform] { stroke: #819b8c; }  /* Leg press */
+.device[data-id="4"] > g[transform] { stroke: #948ba8; }  /* Back extension */
+.device[data-id="5"] > g[transform] { stroke: #84a8ac; }  /* Row */
+.device[data-id="6"] > g[transform] { stroke: #ad9d75; }  /* Pulldown */
+.device[data-id="7"] > g[transform] { stroke: #a88793; }  /* Torso */
+.device[data-id="8"] > g[transform] { stroke: #8caaa0; }  /* Arm curl */
+.device[data-id="9"] > g[transform] { stroke: #9a93b6; }  /* Leg ext */
 
 /* Sheets */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 220ms ease;
+  transition: opacity 200ms var(--ease-ios);
 }
 .backdrop.open { opacity: 1; pointer-events: auto; }
 #picker-backdrop { z-index: 100; }
@@ -142,18 +133,18 @@ svg.floorplan {
 .sheet {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 28%),
-    var(--bg-surface);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-surface);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border-top: 0.5px solid var(--separator);
   border-radius: 22px 22px 0 0;
   transform: translateY(100%);
-  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 240ms var(--ease-ios);
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
 }
 .sheet.open { transform: translateY(0); }
 
@@ -175,10 +166,11 @@ svg.floorplan {
   min-height: 36px;
 }
 .sheet-title {
+  font-family: -apple-system, "SF Pro Display", system-ui, sans-serif;
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: 0.2px;
+  letter-spacing: -0.2px;
 }
 .icon-btn {
   background: rgba(255, 255, 255, 0.05);
@@ -210,34 +202,34 @@ svg.floorplan {
   min-width: 0;
 }
 .wheel-label {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 2.4px;
-  margin-bottom: 12px;
-  font-weight: 500;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 .wheel-container {
   position: relative;
   height: 200px;
-  background: rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 0.5px solid var(--separator);
+  border-radius: 13px;
   overflow: hidden;
   transition: transform 80ms ease-out, box-shadow 80ms ease-out;
 }
 .wheel-wrap.pulse .wheel-container {
   transform: scale(1.03);
-  box-shadow: 0 0 18px rgba(138, 163, 255, 0.18);
+  box-shadow: 0 0 14px rgba(10, 132, 255, 0.18);
 }
 .wheel-container::before {
   content: '';
   position: absolute;
   left: 0; right: 0;
   top: 80px; height: 40px;
-  background: rgba(255, 255, 255, 0.03);
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 0.5px solid var(--separator-strong);
+  border-bottom: 0.5px solid var(--separator-strong);
   pointer-events: none;
   z-index: 2;
 }
@@ -260,22 +252,22 @@ svg.floorplan {
   align-items: center;
   justify-content: center;
   font-size: 19px;
-  color: rgba(255, 255, 255, 0.36);
+  color: var(--text-quaternary);
   scroll-snap-align: center;
   scroll-snap-stop: always;
   font-variant-numeric: tabular-nums;
-  font-weight: 300;
-  letter-spacing: 0.5px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
   transition: color 140ms ease, font-size 140ms ease, font-weight 140ms ease, letter-spacing 140ms ease;
 }
 .wheel-item.selected {
-  font-size: 30px;
-  color: #dfe7ee;
-  font-weight: 500;
-  letter-spacing: 1px;
+  font-size: 28px;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-/* Done toggle row (compact) */
+/* Done toggle row — iOS-style switch */
 .modal-row {
   padding: 6px 20px;
 }
@@ -283,41 +275,44 @@ svg.floorplan {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
+  background: var(--bg-tile);
+  border: 0.5px solid var(--separator);
+  border-radius: 13px;
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   cursor: pointer;
-  min-height: 38px;
+  min-height: 42px;
 }
-.toggle-row .toggle-label { color: var(--text-primary); letter-spacing: 0.2px; }
+.toggle-row .toggle-label { color: var(--text-primary); letter-spacing: 0.1px; }
 .toggle-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 22px; height: 22px;
-  border-radius: 11px;
-  border: 1.5px solid var(--border-stronger);
-  background: transparent;
+  width: 44px; height: 26px;
+  border-radius: 13px;
+  border: none;
+  background: rgba(120, 120, 128, 0.32);
   position: relative;
   margin: 0;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 140ms ease, border-color 140ms ease;
+  transition: background 220ms var(--ease-ios);
 }
-.toggle-row input[type="checkbox"]:checked {
-  background: var(--done-fill);
-  border-color: var(--done-stroke);
-}
-.toggle-row input[type="checkbox"]:checked::after {
+.toggle-row input[type="checkbox"]::before {
   content: '';
   position: absolute;
-  left: 6px; top: 2px;
-  width: 6px; height: 11px;
-  border: solid #fff;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
+  top: 2px; left: 2px;
+  width: 22px; height: 22px;
+  background: #ffffff;
+  border-radius: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 220ms var(--ease-ios);
+}
+.toggle-row input[type="checkbox"]:checked {
+  background: var(--success);
+}
+.toggle-row input[type="checkbox"]:checked::before {
+  transform: translateX(18px);
 }
 
 /* Rest counter + timer row */
@@ -328,25 +323,25 @@ svg.floorplan {
 }
 .rest-counter {
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-secondary);
-  letter-spacing: 2.2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   transition: color 200ms ease;
 }
-.rest-counter.complete { color: #5dc491; }
+.rest-counter.complete { color: var(--success); }
 
 /* Notities veld */
 .notes-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: var(--bg-tile);
+  border: 0.5px solid var(--separator);
+  border-radius: 6px;
+  padding: 9px 11px;
   color: var(--text-primary);
-  font-family: inherit;
+  font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
   font-size: 13px;
   font-weight: 400;
   line-height: 1.45;
@@ -355,38 +350,37 @@ svg.floorplan {
   -webkit-appearance: none;
   appearance: none;
   letter-spacing: 0.1px;
-  transition: background 140ms ease, border-color 140ms ease;
+  transition: background 140ms var(--ease-ios), border-color 140ms var(--ease-ios);
 }
 .notes-input::placeholder { color: var(--text-tertiary); }
 .notes-input:focus {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: #242426;
+  border-color: var(--separator-strong);
 }
 
-/* Timer */
+/* Timer button — iOS style (neutral idle, accent-blue counting) */
 .btn-timer {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #2c2c2e;
+  border: none;
   color: var(--text-primary);
-  padding: 18px 24px;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
+  padding: 13px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
   cursor: pointer;
   width: 100%;
   font-variant-numeric: tabular-nums;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition: background 180ms var(--ease-ios), color 180ms var(--ease-ios);
 }
-.btn-timer:active:not(:disabled) { background: rgba(255, 255, 255, 0.10); }
+.btn-timer:active:not(:disabled) { background: #3a3a3c; }
 .btn-timer.counting {
-  background: rgba(255, 169, 64, 0.07);
-  border-color: rgba(255, 169, 64, 0.28);
-  color: var(--warn);
-  font-size: 34px;
-  font-weight: 300;
-  letter-spacing: 2px;
-  padding: 22px 24px;
+  background: rgba(10, 132, 255, 0.16);
+  color: var(--accent);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 16px 20px;
   cursor: default;
 }
 .btn-timer:disabled { opacity: 1; }
@@ -403,7 +397,7 @@ svg.floorplan {
   justify-content: space-between;
   align-items: center;
   padding: 14px 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 0.5px solid var(--separator);
   font-size: 14px;
 }
 .history-row:last-child { border-bottom: none; }
@@ -424,18 +418,19 @@ svg.floorplan {
   padding: 12px 20px 4px;
 }
 .btn-primary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #2c2c2e;
+  border: none;
   color: var(--text-primary);
-  padding: 15px 24px;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
   cursor: pointer;
   width: 100%;
+  transition: background 180ms var(--ease-ios);
 }
-.btn-primary:active { background: rgba(255, 255, 255, 0.10); }
+.btn-primary:active { background: #3a3a3c; }
 
 /* Rust voorbij flash */
 .rest-flash {
@@ -492,19 +487,19 @@ svg.floorplan {
 
 <div class="stage">
   <svg class="floorplan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 600" preserveAspectRatio="xMidYMid meet">
-    <!-- Bovenste ruimte (3 kolommen, 3 rijen partial) — subtiel cool getint -->
-    <rect x="10" y="15" width="373" height="320" rx="6" ry="6"
-          fill="#0c0e16" stroke="#252a35" stroke-width="1"/>
-    <text x="196.5" y="328" text-anchor="middle" fill="#3a3e48" font-size="10" letter-spacing="2">RUIMTE A</text>
+    <!-- Bovenste ruimte (3 kolommen, 3 rijen partial) -->
+    <rect x="10" y="15" width="373" height="320" rx="13" ry="13"
+          fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <text x="196.5" y="328" text-anchor="middle" fill="#48484a" font-size="10" letter-spacing="2">RUIMTE A</text>
 
-    <!-- Onderste ruimte — subtiel warm getint -->
-    <rect x="10" y="345" width="373" height="235" rx="6" ry="6"
-          fill="#100d16" stroke="#2a2535" stroke-width="1"/>
-    <text x="196.5" y="573" text-anchor="middle" fill="#3e3a48" font-size="10" letter-spacing="2">RUIMTE B</text>
+    <!-- Onderste ruimte -->
+    <rect x="10" y="345" width="373" height="235" rx="13" ry="13"
+          fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <text x="196.5" y="573" text-anchor="middle" fill="#48484a" font-size="10" letter-spacing="2">RUIMTE B</text>
 
     <!-- ROOM A row 1 — Chest press (col1), Abdominal (col2), Leg press (col3) -->
     <g class="device" data-id="1">
-      <rect class="device-bg" x="270" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="270" y="40" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(270,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="40" y1="6" x2="40" y2="34"/>
         <line x1="22" y1="22" x2="58" y2="22"/>
@@ -515,7 +510,7 @@ svg.floorplan {
       <text x="310" y="108" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">press</text>
     </g>
     <g class="device" data-id="2">
-      <rect class="device-bg" x="157" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="157" y="40" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(157,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="20" y1="6" x2="28" y2="34"/>
         <line x1="20" y1="34" x2="54" y2="34"/>
@@ -525,7 +520,7 @@ svg.floorplan {
       <text x="197" y="102" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Abdominal</text>
     </g>
     <g class="device" data-id="3">
-      <rect class="device-bg" x="43" y="40" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="40" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,40)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="34" x2="46" y2="10"/>
         <line x1="14" y1="34" x2="22" y2="34"/>
@@ -539,7 +534,7 @@ svg.floorplan {
 
     <!-- ROOM A row 2 — Back extension (col1) -->
     <g class="device" data-id="4">
-      <rect class="device-bg" x="43" y="140" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="140" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,140)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="26" y1="20" x2="40" y2="20"/>
         <line x1="46" y1="26" x2="58" y2="26"/>
@@ -551,21 +546,9 @@ svg.floorplan {
       <text x="83" y="208" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">extension</text>
     </g>
 
-    <!-- ROOM A row 2 — Vandaag-tegel (col2, midden, onder Abdominal) -->
-    <g class="progress-tile" id="today-tile">
-      <rect class="tile-bg" x="157" y="140" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
-      <circle cx="197" cy="165" r="15" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2.6"/>
-      <circle id="progress-ring" cx="197" cy="165" r="15" fill="none" stroke="#2f8a5e" stroke-width="2.6"
-              pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"
-              stroke-linecap="round"
-              transform="rotate(-90 197 165)"/>
-      <text id="progress-text" x="197" y="170" text-anchor="middle" font-size="11" font-weight="500" fill="#dfe7ee" pointer-events="none">0 / 9</text>
-      <text x="197" y="202" text-anchor="middle" font-size="10" fill="#888892" pointer-events="none">vandaag</text>
-    </g>
-
     <!-- ROOM A row 3 — Row (col1) -->
     <g class="device" data-id="5">
-      <rect class="device-bg" x="43" y="240" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="240" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,240)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="40" cy="10" r="3"/>
         <line x1="40" y1="13" x2="40" y2="34"/>
@@ -579,7 +562,7 @@ svg.floorplan {
 
     <!-- ROOM B row 1 — Pulldown (col1, links) -->
     <g class="device" data-id="6">
-      <rect class="device-bg" x="43" y="370" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="370" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,370)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="6" x2="66" y2="6"/>
         <line x1="24" y1="6" x2="24" y2="30"/>
@@ -592,7 +575,7 @@ svg.floorplan {
 
     <!-- ROOM B row 2 — Torso, Arm curl, Leg ext -->
     <g class="device" data-id="7">
-      <rect class="device-bg" x="43" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="43" y="470" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="40" cy="10" r="3"/>
         <line x1="40" y1="13" x2="40" y2="34"/>
@@ -603,7 +586,7 @@ svg.floorplan {
       <text x="83" y="532" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Torso</text>
     </g>
     <g class="device" data-id="8">
-      <rect class="device-bg" x="157" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="157" y="470" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(157,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="34" x2="36" y2="14"/>
         <line x1="14" y1="34" x2="24" y2="34"/>
@@ -615,7 +598,7 @@ svg.floorplan {
       <text x="197" y="538" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">curl</text>
     </g>
     <g class="device" data-id="9">
-      <rect class="device-bg" x="270" y="470" width="80" height="80" rx="8" fill="#17171c" stroke="#2c2c33" stroke-width="1"/>
+      <rect class="device-bg" x="270" y="470" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(270,470)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="22" x2="32" y2="22"/>
         <line x1="12" y1="22" x2="12" y2="36"/>
@@ -630,15 +613,15 @@ svg.floorplan {
 
     <!-- Volgordenummers rechtsonder in elk apparaat-vlak -->
     <g class="order-numbers" pointer-events="none">
-      <text x="117" y="113" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">1</text>
-      <text x="231" y="113" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">8</text>
-      <text x="344" y="113" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">2</text>
-      <text x="117" y="213" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">7</text>
-      <text x="117" y="313" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">4</text>
-      <text x="117" y="443" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">3</text>
-      <text x="117" y="543" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">9</text>
-      <text x="231" y="543" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">6</text>
-      <text x="344" y="543" text-anchor="end" font-size="10" font-weight="500" fill="#ffffff" font-variant-numeric="tabular-nums">5</text>
+      <text x="117" y="113" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">1</text>
+      <text x="231" y="113" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">8</text>
+      <text x="344" y="113" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">2</text>
+      <text x="117" y="213" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">7</text>
+      <text x="117" y="313" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">4</text>
+      <text x="117" y="443" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">3</text>
+      <text x="117" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">9</text>
+      <text x="231" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">6</text>
+      <text x="344" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">5</text>
     </g>
   </svg>
 </div>
@@ -1109,23 +1092,11 @@ svg.floorplan {
   const TOTAL_DEVICES = 9;
   function renderDoneStates() {
     const today = todayStr();
-    let doneCount = 0;
     document.querySelectorAll('.device').forEach(g => {
       const id = parseInt(g.dataset.id, 10);
-      if (STORE.getDoneDate(id) === today) {
-        g.classList.add('done');
-        doneCount++;
-      } else {
-        g.classList.remove('done');
-      }
+      if (STORE.getDoneDate(id) === today) g.classList.add('done');
+      else g.classList.remove('done');
     });
-    const progressText = document.getElementById('progress-text');
-    const progressRing = document.getElementById('progress-ring');
-    if (progressText) progressText.textContent = doneCount + ' / ' + TOTAL_DEVICES;
-    if (progressRing) {
-      const offset = 100 - (doneCount / TOTAL_DEVICES) * 100;
-      progressRing.setAttribute('stroke-dashoffset', offset);
-    }
   }
 
   // ===== Picker =====
