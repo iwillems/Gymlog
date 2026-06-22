@@ -275,9 +275,9 @@ svg.floorplan {
   letter-spacing: 1px;
 }
 
-/* Done toggle row */
+/* Done toggle row (compact) */
 .modal-row {
-  padding: 8px 20px;
+  padding: 6px 20px;
 }
 .toggle-row {
   display: flex;
@@ -285,18 +285,19 @@ svg.floorplan {
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 14px 16px;
-  font-size: 15px;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
   font-weight: 400;
   cursor: pointer;
+  min-height: 38px;
 }
 .toggle-row .toggle-label { color: var(--text-primary); letter-spacing: 0.2px; }
 .toggle-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 30px; height: 30px;
-  border-radius: 15px;
+  width: 22px; height: 22px;
+  border-radius: 11px;
   border: 1.5px solid var(--border-stronger);
   background: transparent;
   position: relative;
@@ -312,11 +313,54 @@ svg.floorplan {
 .toggle-row input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
-  left: 9px; top: 4px;
-  width: 7px; height: 13px;
+  left: 6px; top: 2px;
+  width: 6px; height: 11px;
   border: solid #fff;
-  border-width: 0 2px 2px 0;
+  border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);
+}
+
+/* Rest counter + timer row */
+.timer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rest-counter {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition: color 200ms ease;
+}
+.rest-counter.complete { color: #5dc491; }
+
+/* Notities veld */
+.notes-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  resize: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  letter-spacing: 0.1px;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.notes-input::placeholder { color: var(--text-tertiary); }
+.notes-input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Timer */
@@ -625,8 +669,12 @@ svg.floorplan {
       <input type="checkbox" id="done-toggle">
     </label>
   </div>
-  <div class="modal-row">
+  <div class="modal-row timer-row">
+    <div class="rest-counter" id="rest-counter">Rust 0/2</div>
     <button class="btn-timer" id="timer-btn" type="button">Start rust</button>
+  </div>
+  <div class="modal-row">
+    <textarea class="notes-input" id="notes-input" rows="3" placeholder="Notities" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   </div>
 </div>
 
@@ -894,6 +942,8 @@ svg.floorplan {
   const wheel2Wrap     = document.getElementById('wheel2-wrap');
   const doneToggle     = document.getElementById('done-toggle');
   const timerBtn       = document.getElementById('timer-btn');
+  const restCounterEl  = document.getElementById('rest-counter');
+  const notesInput     = document.getElementById('notes-input');
   const historyBackdrop= document.getElementById('history-backdrop');
   const historySheet   = document.getElementById('history-sheet');
   const historyTitle   = document.getElementById('history-title');
@@ -906,8 +956,48 @@ svg.floorplan {
   attachWheelFeedback(wheel1, wheel1Wrap);
   attachWheelFeedback(wheel2, wheel2Wrap);
 
+  // ===== Rest count per device (auto-done na 2 rust-periodes) =====
+  function getRestCount(id) {
+    const v = localStorage.getItem('rest_count_' + id);
+    if (!v) return 0;
+    const colon = v.indexOf(':');
+    if (colon < 0) return 0;
+    const date = v.substring(0, colon);
+    if (date !== todayStr()) return 0;
+    return parseInt(v.substring(colon + 1), 10) || 0;
+  }
+  function setRestCount(id, count) {
+    if (count <= 0) localStorage.removeItem('rest_count_' + id);
+    else localStorage.setItem('rest_count_' + id, todayStr() + ':' + count);
+  }
+  function incrementRestCount(id) {
+    const next = getRestCount(id) + 1;
+    setRestCount(id, next);
+    return next;
+  }
+  function updateRestCounterUI(id) {
+    if (!restCounterEl) return;
+    const c = id ? getRestCount(id) : 0;
+    const displayed = Math.min(c, 2);
+    restCounterEl.textContent = 'Rust ' + displayed + ' / 2';
+    restCounterEl.classList.toggle('complete', c >= 2);
+  }
+
+  // ===== Notities per apparaat =====
+  function loadNotes(id) {
+    if (!notesInput) return;
+    notesInput.value = localStorage.getItem('notes_' + id) || '';
+  }
+  function saveNotes(id) {
+    if (!notesInput || !id) return;
+    const val = notesInput.value;
+    if (val.length > 0) localStorage.setItem('notes_' + id, val);
+    else localStorage.removeItem('notes_' + id);
+  }
+
   // ===== Timer (background-safe via timestamp in localStorage) =====
   const TIMER_END_KEY = 'rest_timer_end';
+  const TIMER_DEVICE_KEY = 'rest_timer_device';
   const TIMER_ALERT_KEY = 'rest_timer_alert_fired';
 
   function isTimerRunning() {
@@ -934,6 +1024,7 @@ svg.floorplan {
   }
   function clearTimerStorage() {
     localStorage.removeItem(TIMER_END_KEY);
+    localStorage.removeItem(TIMER_DEVICE_KEY);
     localStorage.removeItem(TIMER_ALERT_KEY);
   }
   function globalTimerTick() {
@@ -944,19 +1035,40 @@ svg.floorplan {
     const end = parseInt(localStorage.getItem(TIMER_END_KEY), 10);
     const remaining = Math.ceil((end - Date.now()) / 1000);
     if (remaining > 0) {
-      // Only update button if picker modal is open
       if (timerBtn && pickerSheet.classList.contains('open')) {
         timerBtn.classList.add('counting');
         timerBtn.disabled = true;
         timerBtn.textContent = remaining + 's';
       }
     } else {
-      // Rust voorbij
+      // Rust voorbij — beep + flash + counter increment + mogelijk auto-done
       if (localStorage.getItem(TIMER_ALERT_KEY) !== '1') {
         localStorage.setItem(TIMER_ALERT_KEY, '1');
         playBeep();
         tinyVibrate();
         showRestDoneAlert();
+
+        const did = parseInt(localStorage.getItem(TIMER_DEVICE_KEY), 10);
+        if (did >= 1 && did <= TOTAL_DEVICES) {
+          const newCount = incrementRestCount(did);
+          if (newCount >= 2 && !isDoneToday(did)) {
+            STORE.setDoneDate(did, todayStr());
+          }
+          renderDoneStates();
+          // Update modal UI if user is viewing this device
+          if (pickerSheet.classList.contains('open') && activeDeviceId === did) {
+            updateRestCounterUI(did);
+            doneToggle.checked = isDoneToday(did);
+          }
+          // Check 9/9 — celebrate after the flash has shown
+          let doneCount = 0;
+          for (let i = 1; i <= TOTAL_DEVICES; i++) {
+            if (STORE.getDoneDate(i) === todayStr()) doneCount++;
+          }
+          if (doneCount === TOTAL_DEVICES) {
+            setTimeout(triggerCelebration, 1900);
+          }
+        }
       }
       clearTimerStorage();
       resetTimerUI();
@@ -971,6 +1083,7 @@ svg.floorplan {
     if (isTimerRunning()) return;
     const end = Date.now() + REST_SECONDS * 1000;
     localStorage.setItem(TIMER_END_KEY, String(end));
+    if (activeDeviceId !== null) localStorage.setItem(TIMER_DEVICE_KEY, String(activeDeviceId));
     localStorage.removeItem(TIMER_ALERT_KEY);
     unlockAudio();
     updateTimerUI();
@@ -986,6 +1099,11 @@ svg.floorplan {
     if (isTimerRunning()) return;
     startTimer();
   });
+  if (notesInput) {
+    notesInput.addEventListener('input', () => {
+      if (activeDeviceId !== null) saveNotes(activeDeviceId);
+    });
+  }
 
   // ===== Done state rendering on floorplan =====
   const TOTAL_DEVICES = 9;
@@ -1020,6 +1138,8 @@ svg.floorplan {
     buildWheel(wheel1, WHEEL1_VALUES, cur.wheel1);
     buildWheel(wheel2, WHEEL2_VALUES, cur.wheel2);
     doneToggle.checked = isDoneToday(id);
+    loadNotes(id);
+    updateRestCounterUI(id);
     updateTimerUI();
     if (isTimerRunning()) ensureGlobalTimerLoop();
     pickerBackdrop.classList.add('open');
@@ -1028,6 +1148,7 @@ svg.floorplan {
   function closePicker() {
     if (activeDeviceId === null) return;
     // NOTE: timer keeps running in background — do NOT stop here
+    saveNotes(activeDeviceId);
     const w1 = getWheelValue(wheel1);
     const w2 = getWheelValue(wheel2);
     if (w1 !== null && w2 !== null) {
@@ -1132,9 +1253,17 @@ svg.floorplan {
       } else {
         ctx.clearRect(0, 0, W, H);
         canvas.classList.remove('active');
-        // Reset all 9 done flags
-        for (let i = 1; i <= TOTAL_DEVICES; i++) STORE.setDoneDate(i, null);
+        // Reset all 9 done flags AND rest counters (notes blijven onaangetast)
+        for (let i = 1; i <= TOTAL_DEVICES; i++) {
+          STORE.setDoneDate(i, null);
+          setRestCount(i, 0);
+        }
         renderDoneStates();
+        // If modal still open, refresh its UI
+        if (pickerSheet.classList.contains('open') && activeDeviceId !== null) {
+          doneToggle.checked = false;
+          updateRestCounterUI(activeDeviceId);
+        }
       }
     }
     requestAnimationFrame(frame);
