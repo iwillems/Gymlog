@@ -385,6 +385,27 @@ svg.floorplan {
 }
 .btn-timer:disabled { opacity: 1; }
 
+/* Per-device Start/Stop timer button */
+.btn-device-timer {
+  background: #2c2c2e;
+  border: none;
+  color: var(--text-primary);
+  padding: 13px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  transition: background 180ms var(--ease-ios), color 180ms var(--ease-ios);
+}
+.btn-device-timer:active { background: #3a3a3c; }
+.btn-device-timer.running {
+  background: rgba(10, 132, 255, 0.16);
+  color: var(--accent);
+}
+
 /* History */
 .history-list {
   overflow-y: auto;
@@ -657,6 +678,9 @@ svg.floorplan {
     <button class="btn-timer" id="timer-btn" type="button">Start rust</button>
   </div>
   <div class="modal-row">
+    <button class="btn-device-timer" id="device-timer-btn" type="button">Start</button>
+  </div>
+  <div class="modal-row">
     <textarea class="notes-input" id="notes-input" rows="3" placeholder="Notities" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   </div>
 </div>
@@ -927,6 +951,7 @@ svg.floorplan {
   const timerBtn       = document.getElementById('timer-btn');
   const restCounterEl  = document.getElementById('rest-counter');
   const notesInput     = document.getElementById('notes-input');
+  const deviceTimerBtn = document.getElementById('device-timer-btn');
   const historyBackdrop= document.getElementById('history-backdrop');
   const historySheet   = document.getElementById('history-sheet');
   const historyTitle   = document.getElementById('history-title');
@@ -976,6 +1001,67 @@ svg.floorplan {
     const val = notesInput.value;
     if (val.length > 0) localStorage.setItem('notes_' + id, val);
     else localStorage.removeItem('notes_' + id);
+  }
+
+  // ===== Per-device Start/Stop timer (independent of rust-timer) =====
+  let deviceTimerInterval = null;
+
+  function formatElapsed(ms) {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(totalSec / 60);
+    const seconds = totalSec % 60;
+    return minutes + ':' + String(seconds).padStart(2, '0');
+  }
+  function getDeviceTimerStart(id) {
+    const v = localStorage.getItem('start_' + id);
+    return v ? parseInt(v, 10) : null;
+  }
+  function updateDeviceTimerButton(id) {
+    if (!deviceTimerBtn) return;
+    const start = id ? getDeviceTimerStart(id) : null;
+    if (start) {
+      const elapsed = Date.now() - start;
+      deviceTimerBtn.classList.add('running');
+      deviceTimerBtn.textContent = 'Stop ' + formatElapsed(elapsed);
+    } else {
+      deviceTimerBtn.classList.remove('running');
+      deviceTimerBtn.textContent = 'Start';
+    }
+  }
+  function ensureDeviceTimerLoop(id) {
+    if (deviceTimerInterval) return;
+    deviceTimerInterval = setInterval(() => {
+      if (activeDeviceId === id && getDeviceTimerStart(id)) {
+        updateDeviceTimerButton(id);
+      } else {
+        clearInterval(deviceTimerInterval);
+        deviceTimerInterval = null;
+      }
+    }, 1000);
+  }
+  function startDeviceTimerFor(id) {
+    localStorage.setItem('start_' + id, String(Date.now()));
+    updateDeviceTimerButton(id);
+    ensureDeviceTimerLoop(id);
+  }
+  function stopDeviceTimerFor(id) {
+    const start = getDeviceTimerStart(id);
+    if (!start) return;
+    const elapsedStr = formatElapsed(Date.now() - start);
+    const noteValue = 'Tijd: ' + elapsedStr;
+    // Overwrite notes (per spec)
+    localStorage.setItem('notes_' + id, noteValue);
+    if (notesInput && activeDeviceId === id) notesInput.value = noteValue;
+    localStorage.removeItem('start_' + id);
+    updateDeviceTimerButton(id);
+    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
+  }
+  if (deviceTimerBtn) {
+    deviceTimerBtn.addEventListener('click', () => {
+      if (activeDeviceId === null) return;
+      if (getDeviceTimerStart(activeDeviceId)) stopDeviceTimerFor(activeDeviceId);
+      else startDeviceTimerFor(activeDeviceId);
+    });
   }
 
   // ===== Timer (background-safe via timestamp in localStorage) =====
@@ -1113,12 +1199,17 @@ svg.floorplan {
     updateRestCounterUI(id);
     updateTimerUI();
     if (isTimerRunning()) ensureGlobalTimerLoop();
+    // Device-specific Start/Stop timer
+    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
+    updateDeviceTimerButton(id);
+    if (getDeviceTimerStart(id)) ensureDeviceTimerLoop(id);
     pickerBackdrop.classList.add('open');
     pickerSheet.classList.add('open');
   }
   function closePicker() {
     if (activeDeviceId === null) return;
-    // NOTE: timer keeps running in background — do NOT stop here
+    // NOTE: timers keep running in background — do NOT stop here
+    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
     saveNotes(activeDeviceId);
     const w1 = getWheelValue(wheel1);
     const w2 = getWheelValue(wheel2);
@@ -1341,11 +1432,19 @@ svg.floorplan {
   window.addEventListener('focus', () => {
     renderDoneStates();
     if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
+    if (activeDeviceId !== null) {
+      updateDeviceTimerButton(activeDeviceId);
+      if (getDeviceTimerStart(activeDeviceId)) ensureDeviceTimerLoop(activeDeviceId);
+    }
   });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       renderDoneStates();
       if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
+      if (activeDeviceId !== null) {
+        updateDeviceTimerButton(activeDeviceId);
+        if (getDeviceTimerStart(activeDeviceId)) ensureDeviceTimerLoop(activeDeviceId);
+      }
     }
   });
 
