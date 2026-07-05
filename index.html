@@ -417,6 +417,17 @@ svg.floorplan {
   padding: 40px 16px;
   font-size: 14px;
 }
+/* SVG line-chart voor geschiedenis */
+.history-chart {
+  width: 100%;
+  height: 220px;
+  display: block;
+  background: var(--bg-tile);
+  border: 0.5px solid var(--separator);
+  border-radius: 13px;
+  padding: 8px;
+  box-sizing: border-box;
+}
 .btn-row {
   padding: 12px 20px 4px;
 }
@@ -1271,34 +1282,78 @@ svg.floorplan {
     return pad(d.getDate()) + '-' + pad(d.getMonth()+1) + '-' + d.getFullYear()
          + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
+  function buildHistoryChart(values) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const W = 320, H = 200;
+    const PAD_X = 22, PAD_TOP = 20, PAD_BOTTOM = 20;
+    const chartW = W - 2 * PAD_X;
+    const chartH = H - PAD_TOP - PAD_BOTTOM;
+
+    let vmin = Math.min.apply(null, values);
+    let vmax = Math.max.apply(null, values);
+    if (vmin === vmax) { vmin -= 5; vmax += 5; }
+    const vrange = vmax - vmin;
+    const n = values.length;
+    const accent = '#0a84ff';
+
+    function xAt(i) {
+      if (n === 1) return W / 2;
+      return PAD_X + (i / (n - 1)) * chartW;
+    }
+    function yAt(v) {
+      return PAD_TOP + (1 - (v - vmin) / vrange) * chartH;
+    }
+
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.setAttribute('class', 'history-chart');
+
+    // Line
+    if (n > 1) {
+      const d = values.map(function(v, i) {
+        return (i === 0 ? 'M ' : 'L ') + xAt(i).toFixed(1) + ' ' + yAt(v).toFixed(1);
+      }).join(' ');
+      const path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('stroke', accent);
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path);
+    }
+
+    // Dots
+    values.forEach(function(v, i) {
+      const c = document.createElementNS(svgNS, 'circle');
+      c.setAttribute('cx', xAt(i).toFixed(1));
+      c.setAttribute('cy', yAt(v).toFixed(1));
+      c.setAttribute('r', n === 1 ? '4' : '3');
+      c.setAttribute('fill', accent);
+      svg.appendChild(c);
+    });
+
+    return svg;
+  }
+
   function openHistory() {
     if (activeDeviceId === null) return;
     const id = activeDeviceId;
     historyTitle.textContent = (DEVICES[id] || ('Apparaat ' + id)) + ' — geschiedenis';
     const cutoff = Date.now() - HISTORY_WINDOW_MS;
     const filtered = STORE.getHistory(id)
-      .filter(h => h && typeof h.ts === 'number' && h.ts >= cutoff)
-      .sort((a, b) => b.ts - a.ts);
+      .filter(function(h) { return h && typeof h.ts === 'number' && h.ts >= cutoff; })
+      .sort(function(a, b) { return a.ts - b.ts; }); // ascending: oud links, nieuw rechts
     historyList.innerHTML = '';
     if (filtered.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'history-empty';
-      empty.textContent = 'Nog geen wijzigingen in de laatste 3 maanden.';
+      empty.textContent = 'Nog geen geschiedenis';
       historyList.appendChild(empty);
     } else {
-      filtered.forEach(h => {
-        const row = document.createElement('div');
-        row.className = 'history-row';
-        const ts = document.createElement('span');
-        ts.className = 'ts';
-        ts.textContent = fmtDate(h.ts);
-        const val = document.createElement('span');
-        val.className = 'val';
-        val.textContent = h.wheel1 + ' + ' + h.wheel2;
-        row.appendChild(ts);
-        row.appendChild(val);
-        historyList.appendChild(row);
-      });
+      const totals = filtered.map(function(h) { return h.wheel1 + h.wheel2; });
+      historyList.appendChild(buildHistoryChart(totals));
     }
     historyBackdrop.classList.add('open');
     historySheet.classList.add('open');

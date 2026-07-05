@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v18-perdevice-rest';
+const CACHE = 'gymlog-v19-chart';
 const ASSETS = [
   './',
   './index.html',
