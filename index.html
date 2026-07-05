@@ -358,18 +358,22 @@ svg.floorplan {
   border-color: var(--separator-strong);
 }
 
-/* Timer button — iOS style (neutral idle, accent-blue counting) */
+/* Timer button — iOS style (neutral idle, accent-blue counting) — DOMINANT / LARGE */
 .btn-timer {
   background: #2c2c2e;
   border: none;
   color: var(--text-primary);
-  padding: 13px 20px;
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 20px;
+  border-radius: 10px;
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: 0.1px;
+  letter-spacing: 0.2px;
   cursor: pointer;
   width: 100%;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-variant-numeric: tabular-nums;
   transition: background 180ms var(--ease-ios), color 180ms var(--ease-ios);
 }
@@ -377,34 +381,12 @@ svg.floorplan {
 .btn-timer.counting {
   background: rgba(10, 132, 255, 0.16);
   color: var(--accent);
-  font-size: 28px;
+  font-size: 44px;
   font-weight: 700;
-  letter-spacing: 1px;
-  padding: 16px 20px;
+  letter-spacing: 1.5px;
   cursor: default;
 }
 .btn-timer:disabled { opacity: 1; }
-
-/* Per-device Start/Stop timer button */
-.btn-device-timer {
-  background: #2c2c2e;
-  border: none;
-  color: var(--text-primary);
-  padding: 13px 20px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.1px;
-  cursor: pointer;
-  width: 100%;
-  font-variant-numeric: tabular-nums;
-  transition: background 180ms var(--ease-ios), color 180ms var(--ease-ios);
-}
-.btn-device-timer:active { background: #3a3a3c; }
-.btn-device-timer.running {
-  background: rgba(10, 132, 255, 0.16);
-  color: var(--accent);
-}
 
 /* History */
 .history-list {
@@ -678,9 +660,6 @@ svg.floorplan {
     <button class="btn-timer" id="timer-btn" type="button">Start rust</button>
   </div>
   <div class="modal-row">
-    <button class="btn-device-timer" id="device-timer-btn" type="button">Start</button>
-  </div>
-  <div class="modal-row">
     <textarea class="notes-input" id="notes-input" rows="3" placeholder="Notities" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   </div>
 </div>
@@ -871,6 +850,7 @@ svg.floorplan {
     el._lastIndex = idx;
     el._selectedIdx = -1;
     el._suppressFeedback = true;
+    el._userScrolled = false;
     setSelectedItem(el, idx);
 
     // iOS Safari + scroll-snap-type:y mandatory hijacks programmatic scrollTop
@@ -881,17 +861,18 @@ svg.floorplan {
     el.scrollTop = target;
 
     requestAnimationFrame(() => {
-      el.scrollTop = target;
+      if (!el._userScrolled) el.scrollTop = target;
       requestAnimationFrame(() => {
-        el.scrollTop = target;
-        // Re-enable snap and re-assert exact position
+        if (!el._userScrolled) el.scrollTop = target;
         el.style.scrollSnapType = '';
-        el.scrollTop = target;
+        if (!el._userScrolled) el.scrollTop = target;
         setTimeout(() => {
-          if (Math.abs(el.scrollTop - target) > 0.5) {
+          // Only re-assert if the user has NOT started scrolling yet.
+          // This was a bug: fast scrolls within 200ms were reverted.
+          if (!el._userScrolled && Math.abs(el.scrollTop - target) > 0.5) {
             el.scrollTop = target;
           }
-          setSelectedItem(el, idx);
+          setSelectedItem(el, el._lastIndex);
           el._suppressFeedback = false;
         }, 200);
       });
@@ -916,6 +897,7 @@ svg.floorplan {
       // Tactile feedback when selection changes
       if (idx !== el._lastIndex) {
         el._lastIndex = idx;
+        el._userScrolled = true;   // mark user interaction so buildWheel doesn't revert
         if (!el._suppressFeedback) {
           playTick();
           tinyVibrate();
@@ -951,7 +933,6 @@ svg.floorplan {
   const timerBtn       = document.getElementById('timer-btn');
   const restCounterEl  = document.getElementById('rest-counter');
   const notesInput     = document.getElementById('notes-input');
-  const deviceTimerBtn = document.getElementById('device-timer-btn');
   const historyBackdrop= document.getElementById('history-backdrop');
   const historySheet   = document.getElementById('history-sheet');
   const historyTitle   = document.getElementById('history-title');
@@ -1003,74 +984,32 @@ svg.floorplan {
     else localStorage.removeItem('notes_' + id);
   }
 
-  // ===== Per-device Start/Stop timer (independent of rust-timer) =====
-  let deviceTimerInterval = null;
 
-  function formatElapsed(ms) {
-    const totalSec = Math.max(0, Math.floor(ms / 1000));
-    const minutes = Math.floor(totalSec / 60);
-    const seconds = totalSec % 60;
-    return minutes + ':' + String(seconds).padStart(2, '0');
+  // ===== Rust-timer PER APPARAAT (background-safe via timestamp in localStorage) =====
+  function isRestRunningFor(id) {
+    return localStorage.getItem('rest_timer_end_' + id) !== null;
   }
-  function getDeviceTimerStart(id) {
-    const v = localStorage.getItem('start_' + id);
+  function getRestTimerEnd(id) {
+    const v = localStorage.getItem('rest_timer_end_' + id);
     return v ? parseInt(v, 10) : null;
   }
-  function updateDeviceTimerButton(id) {
-    if (!deviceTimerBtn) return;
-    const start = id ? getDeviceTimerStart(id) : null;
-    if (start) {
-      const elapsed = Date.now() - start;
-      deviceTimerBtn.classList.add('running');
-      deviceTimerBtn.textContent = 'Stop ' + formatElapsed(elapsed);
-    } else {
-      deviceTimerBtn.classList.remove('running');
-      deviceTimerBtn.textContent = 'Start';
+  function getRestAlertFired(id) {
+    return localStorage.getItem('rest_timer_alert_fired_' + id) === '1';
+  }
+  function setRestAlertFired(id, fired) {
+    if (fired) localStorage.setItem('rest_timer_alert_fired_' + id, '1');
+    else localStorage.removeItem('rest_timer_alert_fired_' + id);
+  }
+  function clearRestTimerFor(id) {
+    localStorage.removeItem('rest_timer_end_' + id);
+    localStorage.removeItem('rest_timer_alert_fired_' + id);
+  }
+  function getActiveRestTimerIds() {
+    const ids = [];
+    for (let i = 1; i <= TOTAL_DEVICES; i++) {
+      if (isRestRunningFor(i)) ids.push(i);
     }
-  }
-  function ensureDeviceTimerLoop(id) {
-    if (deviceTimerInterval) return;
-    deviceTimerInterval = setInterval(() => {
-      if (activeDeviceId === id && getDeviceTimerStart(id)) {
-        updateDeviceTimerButton(id);
-      } else {
-        clearInterval(deviceTimerInterval);
-        deviceTimerInterval = null;
-      }
-    }, 1000);
-  }
-  function startDeviceTimerFor(id) {
-    localStorage.setItem('start_' + id, String(Date.now()));
-    updateDeviceTimerButton(id);
-    ensureDeviceTimerLoop(id);
-  }
-  function stopDeviceTimerFor(id) {
-    const start = getDeviceTimerStart(id);
-    if (!start) return;
-    const elapsedStr = formatElapsed(Date.now() - start);
-    const noteValue = 'Tijd: ' + elapsedStr;
-    // Overwrite notes (per spec)
-    localStorage.setItem('notes_' + id, noteValue);
-    if (notesInput && activeDeviceId === id) notesInput.value = noteValue;
-    localStorage.removeItem('start_' + id);
-    updateDeviceTimerButton(id);
-    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
-  }
-  if (deviceTimerBtn) {
-    deviceTimerBtn.addEventListener('click', () => {
-      if (activeDeviceId === null) return;
-      if (getDeviceTimerStart(activeDeviceId)) stopDeviceTimerFor(activeDeviceId);
-      else startDeviceTimerFor(activeDeviceId);
-    });
-  }
-
-  // ===== Timer (background-safe via timestamp in localStorage) =====
-  const TIMER_END_KEY = 'rest_timer_end';
-  const TIMER_DEVICE_KEY = 'rest_timer_device';
-  const TIMER_ALERT_KEY = 'rest_timer_alert_fired';
-
-  function isTimerRunning() {
-    return localStorage.getItem(TIMER_END_KEY) !== null;
+    return ids;
   }
   function resetTimerUI() {
     if (!timerBtn) return;
@@ -1079,9 +1018,9 @@ svg.floorplan {
     timerBtn.disabled = false;
   }
   function updateTimerUI() {
-    if (!timerBtn) return;
-    if (!isTimerRunning()) { resetTimerUI(); return; }
-    const end = parseInt(localStorage.getItem(TIMER_END_KEY), 10);
+    if (!timerBtn || activeDeviceId === null) { resetTimerUI(); return; }
+    if (!isRestRunningFor(activeDeviceId)) { resetTimerUI(); return; }
+    const end = getRestTimerEnd(activeDeviceId);
     const remaining = Math.ceil((end - Date.now()) / 1000);
     if (remaining > 0) {
       timerBtn.classList.add('counting');
@@ -1091,69 +1030,67 @@ svg.floorplan {
       resetTimerUI();
     }
   }
-  function clearTimerStorage() {
-    localStorage.removeItem(TIMER_END_KEY);
-    localStorage.removeItem(TIMER_DEVICE_KEY);
-    localStorage.removeItem(TIMER_ALERT_KEY);
-  }
   function globalTimerTick() {
-    if (!isTimerRunning()) {
+    const activeIds = getActiveRestTimerIds();
+    if (activeIds.length === 0) {
       if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
       return;
     }
-    const end = parseInt(localStorage.getItem(TIMER_END_KEY), 10);
-    const remaining = Math.ceil((end - Date.now()) / 1000);
-    if (remaining > 0) {
-      if (timerBtn && pickerSheet.classList.contains('open')) {
-        timerBtn.classList.add('counting');
-        timerBtn.disabled = true;
-        timerBtn.textContent = remaining + 's';
-      }
-    } else {
-      // Rust voorbij — beep + flash + counter increment + mogelijk auto-done
-      if (localStorage.getItem(TIMER_ALERT_KEY) !== '1') {
-        localStorage.setItem(TIMER_ALERT_KEY, '1');
-        playBeep();
-        tinyVibrate();
-        showRestDoneAlert();
-
-        const did = parseInt(localStorage.getItem(TIMER_DEVICE_KEY), 10);
-        if (did >= 1 && did <= TOTAL_DEVICES) {
-          const newCount = incrementRestCount(did);
-          if (newCount >= 2 && !isDoneToday(did)) {
-            STORE.setDoneDate(did, todayStr());
+    const today = todayStr();
+    activeIds.forEach(id => {
+      const end = getRestTimerEnd(id);
+      const remaining = Math.ceil((end - Date.now()) / 1000);
+      if (remaining > 0) {
+        // Update button UI only for the device currently in view
+        if (activeDeviceId === id && timerBtn && pickerSheet.classList.contains('open')) {
+          timerBtn.classList.add('counting');
+          timerBtn.disabled = true;
+          timerBtn.textContent = remaining + 's';
+        }
+      } else {
+        // Rust voorbij for this specific device
+        if (!getRestAlertFired(id)) {
+          setRestAlertFired(id, true);
+          playBeep();
+          tinyVibrate();
+          showRestDoneAlert();
+          const newCount = incrementRestCount(id);
+          if (newCount >= 2 && !isDoneToday(id)) {
+            STORE.setDoneDate(id, today);
           }
           renderDoneStates();
-          // Update modal UI if user is viewing this device
-          if (pickerSheet.classList.contains('open') && activeDeviceId === did) {
-            updateRestCounterUI(did);
-            doneToggle.checked = isDoneToday(did);
+          if (pickerSheet.classList.contains('open') && activeDeviceId === id) {
+            updateRestCounterUI(id);
+            doneToggle.checked = isDoneToday(id);
           }
-          // Check 9/9 — celebrate after the flash has shown
+          // 9/9 check
           let doneCount = 0;
           for (let i = 1; i <= TOTAL_DEVICES; i++) {
-            if (STORE.getDoneDate(i) === todayStr()) doneCount++;
+            if (STORE.getDoneDate(i) === today) doneCount++;
           }
           if (doneCount === TOTAL_DEVICES) {
             setTimeout(triggerCelebration, 1900);
           }
         }
+        clearRestTimerFor(id);
+        if (activeDeviceId === id) resetTimerUI();
       }
-      clearTimerStorage();
-      resetTimerUI();
+    });
+    if (getActiveRestTimerIds().length === 0) {
       if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     }
   }
   function ensureGlobalTimerLoop() {
     if (timerInterval) return;
+    if (getActiveRestTimerIds().length === 0) return;
     timerInterval = setInterval(globalTimerTick, 250);
   }
   function startTimer() {
-    if (isTimerRunning()) return;
+    if (activeDeviceId === null) return;
+    if (isRestRunningFor(activeDeviceId)) return;
     const end = Date.now() + REST_SECONDS * 1000;
-    localStorage.setItem(TIMER_END_KEY, String(end));
-    if (activeDeviceId !== null) localStorage.setItem(TIMER_DEVICE_KEY, String(activeDeviceId));
-    localStorage.removeItem(TIMER_ALERT_KEY);
+    localStorage.setItem('rest_timer_end_' + activeDeviceId, String(end));
+    setRestAlertFired(activeDeviceId, false);
     unlockAudio();
     updateTimerUI();
     ensureGlobalTimerLoop();
@@ -1165,7 +1102,8 @@ svg.floorplan {
     setTimeout(() => flash.classList.remove('show'), 1800);
   }
   timerBtn.addEventListener('click', () => {
-    if (isTimerRunning()) return;
+    if (activeDeviceId === null) return;
+    if (isRestRunningFor(activeDeviceId)) return;
     startTimer();
   });
   if (notesInput) {
@@ -1198,18 +1136,13 @@ svg.floorplan {
     loadNotes(id);
     updateRestCounterUI(id);
     updateTimerUI();
-    if (isTimerRunning()) ensureGlobalTimerLoop();
-    // Device-specific Start/Stop timer
-    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
-    updateDeviceTimerButton(id);
-    if (getDeviceTimerStart(id)) ensureDeviceTimerLoop(id);
+    ensureGlobalTimerLoop();
     pickerBackdrop.classList.add('open');
     pickerSheet.classList.add('open');
   }
   function closePicker() {
     if (activeDeviceId === null) return;
-    // NOTE: timers keep running in background — do NOT stop here
-    if (deviceTimerInterval) { clearInterval(deviceTimerInterval); deviceTimerInterval = null; }
+    // NOTE: rust-timers keep running in background — do NOT stop here
     saveNotes(activeDeviceId);
     const w1 = getWheelValue(wheel1);
     const w2 = getWheelValue(wheel2);
@@ -1425,26 +1358,20 @@ svg.floorplan {
 
   // ===== Midnight reset / refresh + timer resume =====
   renderDoneStates();
-  if (isTimerRunning()) {
-    globalTimerTick();      // immediate evaluation (may fire alert if expired while closed)
-    if (isTimerRunning()) ensureGlobalTimerLoop();
+  if (getActiveRestTimerIds().length > 0) {
+    globalTimerTick();
+    ensureGlobalTimerLoop();
   }
   window.addEventListener('focus', () => {
     renderDoneStates();
-    if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
-    if (activeDeviceId !== null) {
-      updateDeviceTimerButton(activeDeviceId);
-      if (getDeviceTimerStart(activeDeviceId)) ensureDeviceTimerLoop(activeDeviceId);
-    }
+    if (getActiveRestTimerIds().length > 0) { globalTimerTick(); ensureGlobalTimerLoop(); }
+    if (activeDeviceId !== null) updateTimerUI();
   });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       renderDoneStates();
-      if (isTimerRunning()) { globalTimerTick(); ensureGlobalTimerLoop(); }
-      if (activeDeviceId !== null) {
-        updateDeviceTimerButton(activeDeviceId);
-        if (getDeviceTimerStart(activeDeviceId)) ensureDeviceTimerLoop(activeDeviceId);
-      }
+      if (getActiveRestTimerIds().length > 0) { globalTimerTick(); ensureGlobalTimerLoop(); }
+      if (activeDeviceId !== null) updateTimerUI();
     }
   });
 
