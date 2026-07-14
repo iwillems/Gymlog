@@ -717,6 +717,13 @@ svg.floorplan {
     9: 'Leg ext'
   };
   const WHEEL1_VALUES = [30, 50, 70, 90, 110, 130, 150, 170];
+  // Per-device wheel-1 overrides (Leg press needs heavier weights)
+  const WHEEL1_VALUES_BY_ID = {
+    3: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270]
+  };
+  function getWheel1Values(id) {
+    return WHEEL1_VALUES_BY_ID[id] || WHEEL1_VALUES;
+  }
   const WHEEL2_VALUES = [0, 5, 10, 15];
   const ITEM_HEIGHT = 40;
   const HISTORY_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 3 maanden
@@ -1141,7 +1148,7 @@ svg.floorplan {
     const cur = STORE.getCurrent(id);
     openedSnapshot = { wheel1: cur.wheel1, wheel2: cur.wheel2 };
     pickerTitle.textContent = DEVICES[id] || ('Apparaat ' + id);
-    buildWheel(wheel1, WHEEL1_VALUES, cur.wheel1);
+    buildWheel(wheel1, getWheel1Values(id), cur.wheel1);
     buildWheel(wheel2, WHEEL2_VALUES, cur.wheel2);
     doneToggle.checked = isDoneToday(id);
     loadNotes(id);
