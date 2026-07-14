@@ -719,7 +719,8 @@ svg.floorplan {
   const WHEEL1_VALUES = [30, 50, 70, 90, 110, 130, 150, 170];
   // Per-device wheel-1 overrides (Leg press needs heavier weights)
   const WHEEL1_VALUES_BY_ID = {
-    3: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270]
+    3: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270],
+    4: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270]
   };
   function getWheel1Values(id) {
     return WHEEL1_VALUES_BY_ID[id] || WHEEL1_VALUES;
