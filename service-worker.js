@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v21-backext-heavy';
+const CACHE = 'gymlog-v22-glute';
 const ASSETS = [
   './',
   './index.html',

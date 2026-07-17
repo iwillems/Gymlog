@@ -114,6 +114,7 @@ svg.floorplan {
 .device[data-id="7"] > g[transform] { stroke: #a88793; }  /* Torso */
 .device[data-id="8"] > g[transform] { stroke: #8caaa0; }  /* Arm curl */
 .device[data-id="9"] > g[transform] { stroke: #9a93b6; }  /* Leg ext */
+.device[data-id="10"] > g[transform] { stroke: #c9a366; }  /* Glute — warm amber */
 
 /* Sheets */
 .backdrop {
@@ -574,17 +575,30 @@ svg.floorplan {
       <text x="83" y="302" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Row</text>
     </g>
 
-    <!-- ROOM B row 1 — Pulldown (col1, links) -->
-    <g class="device" data-id="6">
+    <!-- ROOM B row 1 col 1 — Glute (nieuw) -->
+    <g class="device" data-id="10">
       <rect class="device-bg" x="43" y="370" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
       <g transform="translate(43,370)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="20" r="3"/>
+        <line x1="15" y1="20" x2="44" y2="20"/>
+        <line x1="18" y1="20" x2="18" y2="36"/>
+        <line x1="42" y1="20" x2="42" y2="36"/>
+        <line x1="44" y1="20" x2="64" y2="8"/>
+      </g>
+      <text x="83" y="432" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Glute</text>
+    </g>
+
+    <!-- ROOM B row 1 col 2 — Pulldown (verplaatst naar rechts) -->
+    <g class="device" data-id="6">
+      <rect class="device-bg" x="157" y="370" width="80" height="80" rx="13" fill="#1c1c1e" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+      <g transform="translate(157,370)" pointer-events="none" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="14" y1="6" x2="66" y2="6"/>
         <line x1="24" y1="6" x2="24" y2="30"/>
         <line x1="56" y1="6" x2="56" y2="30"/>
         <line x1="18" y1="30" x2="30" y2="30"/>
         <line x1="50" y1="30" x2="62" y2="30"/>
       </g>
-      <text x="83" y="432" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Pulldown</text>
+      <text x="197" y="432" text-anchor="middle" font-size="10" fill="#fff" pointer-events="none">Pulldown</text>
     </g>
 
     <!-- ROOM B row 2 — Torso, Arm curl, Leg ext -->
@@ -632,7 +646,8 @@ svg.floorplan {
       <text x="344" y="113" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">2</text>
       <text x="117" y="213" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">7</text>
       <text x="117" y="313" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">4</text>
-      <text x="117" y="443" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">3</text>
+      <text x="117" y="443" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">10</text>
+      <text x="231" y="443" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">3</text>
       <text x="117" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">9</text>
       <text x="231" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">6</text>
       <text x="344" y="543" text-anchor="end" font-size="10" font-weight="600" fill="#ffffff" font-variant-numeric="tabular-nums" font-family="ui-monospace, 'SF Mono', Menlo, monospace">5</text>
@@ -714,13 +729,15 @@ svg.floorplan {
     6: 'Pulldown',
     7: 'Torso',
     8: 'Arm curl',
-    9: 'Leg ext'
+    9: 'Leg ext',
+    10: 'Glute'
   };
   const WHEEL1_VALUES = [30, 50, 70, 90, 110, 130, 150, 170];
-  // Per-device wheel-1 overrides (Leg press needs heavier weights)
+  // Per-device wheel-1 overrides (heavier weights)
   const WHEEL1_VALUES_BY_ID = {
     3: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270],
-    4: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270]
+    4: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270],
+    10: [30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270]
   };
   function getWheel1Values(id) {
     return WHEEL1_VALUES_BY_ID[id] || WHEEL1_VALUES;
@@ -1132,7 +1149,7 @@ svg.floorplan {
   }
 
   // ===== Done state rendering on floorplan =====
-  const TOTAL_DEVICES = 9;
+  const TOTAL_DEVICES = 10;
   function renderDoneStates() {
     const today = todayStr();
     document.querySelectorAll('.device').forEach(g => {
@@ -1399,8 +1416,8 @@ svg.floorplan {
   attachSwipeClose(document.getElementById('picker-handle-area'), closePicker);
   attachSwipeClose(document.getElementById('history-handle-area'), closeHistory);
 
-  // ===== Seed initial values (forced once per seed_version) =====
-  const SEED_VERSION = 'v3';
+  // ===== Seed initial values (only for devices without existing current values) =====
+  const SEED_VERSION = 'v4';
   const SEED = {
     1: { wheel1: 50,  wheel2: 10 },  // Chest press
     2: { wheel1: 110, wheel2: 0  },  // Abdominal
@@ -1410,11 +1427,16 @@ svg.floorplan {
     6: { wheel1: 70,  wheel2: 0  },  // Pulldown
     7: { wheel1: 50,  wheel2: 0  },  // Torso
     8: { wheel1: 30,  wheel2: 15 },  // Arm curl
-    9: { wheel1: 50,  wheel2: 5  }   // Leg ext
+    9: { wheel1: 50,  wheel2: 5  },  // Leg ext
+    10:{ wheel1: 70,  wheel2: 10 }   // Glute (nieuw)
   };
   if (localStorage.getItem('seed_version') !== SEED_VERSION) {
+    // Only seed devices that don't already have a stored value —
+    // this preserves existing user data while giving new devices sensible defaults.
     Object.keys(SEED).forEach(id => {
-      STORE.setCurrent(id, SEED[id]);
+      if (localStorage.getItem('current_' + id) === null) {
+        STORE.setCurrent(id, SEED[id]);
+      }
     });
     localStorage.setItem('seed_version', SEED_VERSION);
   }
