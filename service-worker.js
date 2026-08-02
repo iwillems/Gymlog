@@ -1,4 +1,4 @@
-const CACHE = 'gymlog-v22-glute';
+const CACHE = 'gymlog-v23-remove-glute';
 const ASSETS = [
   './',
   './index.html',
